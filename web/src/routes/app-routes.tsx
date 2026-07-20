@@ -26,6 +26,11 @@ const NotFoundPage = lazy(() =>
     default: module.NotFoundPage,
   }))
 )
+const NewPostPage = lazy(() =>
+  import("@/pages/new-post-page").then((module) => ({
+    default: module.NewPostPage,
+  }))
+)
 const PostDetailPage = lazy(() =>
   import("@/pages/post-detail-page").then((module) => ({
     default: module.PostDetailPage,
@@ -75,6 +80,14 @@ export function AppRoutes() {
             element={
               <ProtectedRoute>
                 <SearchPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="posts/new"
+            element={
+              <ProtectedRoute>
+                <NewPostPage />
               </ProtectedRoute>
             }
           />
