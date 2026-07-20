@@ -1,14 +1,30 @@
 from typing import Any
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
 from app.api.router import includes_api_routes
 from app.core.app_exception_handler import app_exception_handler
+from app.core.config import settings
 from app.core.exceptions import AppException
 import app.models
 
 app = FastAPI()
+
+allowed_origins = {
+    settings.frontend_url.rstrip("/"),
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+}
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=sorted(allowed_origins),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 includes_api_routes(app)
 
