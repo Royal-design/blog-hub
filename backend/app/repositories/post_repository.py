@@ -13,6 +13,8 @@ class PostRepository:
             selectinload(Post.category),
             selectinload(Post.tags),
             selectinload(Post.images),
+            selectinload(Post.likes),
+            selectinload(Post.comments),
         )
         
     def get_all_posts(self):

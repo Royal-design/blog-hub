@@ -46,21 +46,21 @@ export function FollowButton({
   }, [isFollowingServer])
 
   const toggleMutation = useMutation({
-    mutationFn: async () => {
-      if (isFollowing) {
+    mutationFn: async (currentlyFollowing: boolean) => {
+      if (currentlyFollowing) {
         await followService.unfollowUser(userId)
       } else {
         await followService.followUser(userId)
       }
     },
-    onMutate: async () => {
-      const prev = isFollowing
-      setIsFollowing(!prev)
-      return { prev }
+    onMutate: async (currentlyFollowing: boolean) => {
+      const nextState = !currentlyFollowing
+      setIsFollowing(nextState)
+      return { previousState: currentlyFollowing }
     },
-    onError: (_err, _vars, context) => {
+    onError: (_err, _currentlyFollowing, context) => {
       if (context) {
-        setIsFollowing(context.prev)
+        setIsFollowing(context.previousState)
       }
     },
     onSettled: () => {
@@ -73,7 +73,7 @@ export function FollowButton({
     e.stopPropagation()
     e.preventDefault()
     if (!currentUser || toggleMutation.isPending) return
-    toggleMutation.mutate()
+    toggleMutation.mutate(isFollowing)
   }
 
   return (

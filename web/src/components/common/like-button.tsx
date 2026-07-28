@@ -45,6 +45,11 @@ export function LikeButton({
     setIsLiked(isLikedServer)
   }, [isLikedServer])
 
+  // Sync count when the prop updates (e.g. after data loads)
+  React.useEffect(() => {
+    setLikeCount(initialCount)
+  }, [initialCount])
+
   const toggleMutation = useMutation({
     mutationFn: async (currentlyLiked: boolean) => {
       if (currentlyLiked) {

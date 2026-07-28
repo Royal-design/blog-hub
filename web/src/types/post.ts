@@ -43,6 +43,8 @@ export type Post = {
   category: PostCategory
   tags: PostTag[]
   images: PostImage[]
+  like_count?: number
+  comment_count?: number
   published_at?: string | null
   created_at: string
   updated_at: string

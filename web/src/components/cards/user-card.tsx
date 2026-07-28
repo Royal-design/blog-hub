@@ -1,5 +1,4 @@
 import { motion } from "framer-motion"
-import { Link } from "react-router"
 
 import { FollowButton } from "@/components/common/follow-button"
 import type { User } from "@/types/auth"
@@ -11,33 +10,45 @@ export interface UserCardProps {
   compact?: boolean
 }
 
-export function UserCard({ user, followersCount, compact = false }: UserCardProps) {
-  const fullName = `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.username
-  const initials = getInitials(fullName, user.first_name, user.last_name, user.username)
+export function UserCard({
+  user,
+  followersCount,
+  compact = false,
+}: UserCardProps) {
+  const fullName =
+    `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.username
+  const initials = getInitials(
+    fullName,
+    user.first_name,
+    user.last_name,
+    user.username
+  )
 
   if (compact) {
     return (
-      <div className="flex items-center justify-between gap-3 p-3 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 bg-card hover:bg-slate-50/80 dark:hover:bg-slate-900/40 transition-colors">
-        <Link to="/profile" className="flex items-center gap-3 min-w-0 flex-1 group">
-          {user.avatar ? (
+      <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200/60 bg-card p-3 transition-colors hover:bg-slate-50/80 dark:border-slate-800/60 dark:hover:bg-slate-900/40">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          {user.avatar && user.avatar !== "string" ? (
             <img
               src={user.avatar}
               alt={fullName}
-              className="size-10 rounded-full object-cover shrink-0 ring-2 ring-primary/20"
+              className="size-10 shrink-0 rounded-full object-cover ring-2 ring-primary/20"
               loading="lazy"
             />
           ) : (
-            <div className="grid size-10 place-items-center rounded-full bg-primary/10 text-primary font-extrabold text-xs shrink-0 border border-primary/20 tracking-wider">
+            <div className="grid size-10 shrink-0 place-items-center rounded-full border border-primary/20 bg-primary/10 text-xs font-extrabold tracking-wider text-primary">
               {initials}
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <h4 className="text-xs font-bold text-foreground truncate group-hover:text-primary transition-colors">
+            <h4 className="truncate text-xs font-bold text-foreground">
               {fullName}
             </h4>
-            <p className="text-[11px] text-muted-foreground truncate">@{user.username}</p>
+            <p className="truncate text-[11px] text-muted-foreground">
+              @{user.username}
+            </p>
           </div>
-        </Link>
+        </div>
         <FollowButton userId={user.id} size="sm" />
       </div>
     )
@@ -46,44 +57,46 @@ export function UserCard({ user, followersCount, compact = false }: UserCardProp
   return (
     <motion.div
       whileHover={{ y: -2 }}
-      className="flex flex-col justify-between p-5 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-card shadow-sm hover:shadow-md transition-all duration-200"
+      className="flex flex-col justify-between rounded-2xl border border-slate-200/80 bg-card p-5 shadow-sm transition-all duration-200 hover:shadow-md dark:border-slate-800/80"
     >
       <div className="flex items-start gap-4">
-        <Link to="/profile" className="shrink-0 group">
-          {user.avatar ? (
+        <div className="shrink-0">
+          {user.avatar && user.avatar !== "string" ? (
             <img
               src={user.avatar}
               alt={fullName}
-              className="size-14 rounded-full object-cover ring-2 ring-primary/20 group-hover:scale-105 transition-transform"
+              className="size-14 rounded-full object-cover ring-2 ring-primary/20"
               loading="lazy"
             />
           ) : (
-            <div className="grid size-14 place-items-center rounded-full bg-primary/10 text-primary font-extrabold text-base border border-primary/20 group-hover:scale-105 transition-transform tracking-wider">
+            <div className="grid size-14 place-items-center rounded-full border border-primary/20 bg-primary/10 text-base font-extrabold tracking-wider text-primary">
               {initials}
             </div>
           )}
-        </Link>
+        </div>
 
         <div className="min-w-0 flex-1 space-y-1">
-          <Link to="/profile">
-            <h3 className="text-sm font-extrabold text-foreground truncate hover:text-primary transition-colors">
-              {fullName}
-            </h3>
-          </Link>
+          <h3 className="truncate text-sm font-extrabold text-foreground">
+            {fullName}
+          </h3>
           <p className="text-xs font-semibold text-primary">@{user.username}</p>
           {user.bio ? (
-            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed pt-0.5">
+            <p className="line-clamp-2 pt-0.5 text-xs leading-relaxed text-muted-foreground">
               {user.bio}
             </p>
           ) : (
-            <p className="text-xs text-muted-foreground/60 italic pt-0.5">No bio provided</p>
+            <p className="pt-0.5 text-xs text-muted-foreground/60 italic">
+              No bio provided
+            </p>
           )}
         </div>
       </div>
 
-      <div className="flex items-center justify-between pt-4 mt-4 border-t border-slate-100 dark:border-slate-800/80">
+      <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4 dark:border-slate-800/80">
         <span className="text-xs font-semibold text-muted-foreground">
-          {followersCount !== undefined ? `${followersCount} followers` : "Creator"}
+          {followersCount !== undefined
+            ? `${followersCount} followers`
+            : "Creator"}
         </span>
         <FollowButton userId={user.id} size="sm" />
       </div>

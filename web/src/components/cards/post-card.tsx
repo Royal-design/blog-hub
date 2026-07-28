@@ -106,13 +106,14 @@ export function PostCard({ post, layout = "grid" }: PostCardProps) {
           <div className="flex items-center justify-between text-xs text-muted-foreground pt-3 border-t border-slate-100 dark:border-slate-800/80">
             <span className="font-semibold">{getReadingTime(post.content)}</span>
             <div className="flex items-center gap-1">
-              <LikeButton postId={post.id} size="sm" showCount={true} />
+              <LikeButton postId={post.id} initialCount={post.like_count ?? 0} size="sm" showCount={true} />
               <Link
                 to={`/posts/${post.slug}`}
                 className={cn(buttonVariants({ size: "icon-sm", variant: "ghost" }), "rounded-xl gap-1 text-xs font-semibold")}
                 aria-label="View comments"
               >
                 <MessageCircle className="size-4" />
+                {(post.comment_count ?? 0) > 0 && <span>{post.comment_count}</span>}
               </Link>
               <BookmarkButton postId={post.id} size="sm" />
               <button
@@ -221,13 +222,14 @@ export function PostCard({ post, layout = "grid" }: PostCardProps) {
         <div className="flex items-center justify-between text-xs text-muted-foreground pt-3 border-t border-slate-100 dark:border-slate-800/80">
           <span className="font-semibold">{getReadingTime(post.content)}</span>
           <div className="flex items-center gap-1">
-            <LikeButton postId={post.id} size="sm" showCount={true} />
+            <LikeButton postId={post.id} initialCount={post.like_count ?? 0} size="sm" showCount={true} />
             <Link
               to={`/posts/${post.slug}`}
-              className={cn(buttonVariants({ size: "icon-sm", variant: "ghost" }), "rounded-xl")}
+              className={cn(buttonVariants({ size: "icon-sm", variant: "ghost" }), "rounded-xl gap-1 text-xs font-semibold")}
               aria-label="View comments"
             >
               <MessageCircle className="size-4" />
+              {(post.comment_count ?? 0) > 0 && <span>{post.comment_count}</span>}
             </Link>
             <BookmarkButton postId={post.id} size="sm" />
             <button

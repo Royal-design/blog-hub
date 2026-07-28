@@ -123,8 +123,22 @@ class PostResponse(BaseModel):
     tags: list[PostTagResponse] = Field(default_factory=list)
     images: list[PostImageResponse] = Field(default_factory=list)
 
+    # Read from ORM relationships; excluded from response output
+    likes: list = Field(default_factory=list, exclude=True)
+    comments: list = Field(default_factory=list, exclude=True)
+
     published_at: datetime | None
     created_at: datetime
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+    @computed_field
+    @property
+    def like_count(self) -> int:
+        return len(self.likes) if hasattr(self, "likes") and self.likes else 0
+
+    @computed_field
+    @property
+    def comment_count(self) -> int:
+        return len(self.comments) if hasattr(self, "comments") and self.comments else 0
