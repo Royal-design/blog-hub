@@ -24,4 +24,9 @@ export const postService = {
     })
     return response.data.data
   },
+
+  async deletePost(postId: string) {
+    const response = await api.delete<ApiSuccess<void>>(`/posts/${postId}`)
+    return response.data
+  },
 }

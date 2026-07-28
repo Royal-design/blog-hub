@@ -1,5 +1,6 @@
-import { BookOpen, Moon, Plus, Search, Sun } from "lucide-react"
-import { Link, NavLink } from "react-router"
+import * as React from "react"
+import { BookOpen, LogOut, Moon, Plus, Search, Sun, UserCircle } from "lucide-react"
+import { Link, NavLink, useNavigate } from "react-router"
 
 import { Button } from "@/components/ui/button"
 import { buttonVariants } from "@/components/ui/button-variants"
@@ -13,9 +14,11 @@ const navItems = [
   { label: "Home", href: "/" },
   { label: "Dashboard", href: "/dashboard" },
   { label: "Profile", href: "/profile" },
+  { label: "Search", href: "/search" },
 ]
 
 export function SiteHeader() {
+  const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
   const theme = useThemeStore((state) => state.theme)
   const toggleTheme = useThemeStore((state) => state.toggleTheme)
@@ -23,16 +26,25 @@ export function SiteHeader() {
   const setSearchQuery = useAppStore((state) => state.setSearchQuery)
   const logout = useLogout()
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      navigate("/search")
+    }
+  }
+
   return (
-    <header className="sticky top-0 z-40 border-b bg-background/90 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
-        <Link to="/" className="flex items-center gap-2 font-semibold">
-          <span className="grid size-9 place-items-center rounded-lg bg-primary text-primary-foreground">
-            <BookOpen className="size-4" aria-hidden />
+    <header className="sticky top-0 z-40 border-b border-slate-200/80 dark:border-slate-800/80 bg-background/85 backdrop-blur-xl transition-colors">
+      <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        {/* Brand Logo */}
+        <Link to="/" className="flex items-center gap-2.5 font-bold text-foreground hover:opacity-90 transition-opacity">
+          <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/20">
+            <BookOpen className="size-4 stroke-[2.5]" aria-hidden />
           </span>
-          <span>Blog Hub</span>
+          <span className="text-lg tracking-tight font-extrabold">Blog Hub</span>
         </Link>
 
+        {/* Navigation Links */}
         <nav className="hidden items-center gap-1 md:flex">
           {navItems.map((item) => (
             <NavLink
@@ -40,8 +52,8 @@ export function SiteHeader() {
               to={item.href}
               className={({ isActive }) =>
                 cn(
-                  "rounded-md px-3 py-2 text-sm text-muted-foreground transition hover:text-foreground",
-                  isActive && "bg-muted text-foreground"
+                  "rounded-lg px-3.5 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors",
+                  isActive && "bg-slate-100 dark:bg-slate-800 text-foreground font-bold"
                 )
               }
             >
@@ -50,48 +62,67 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="ml-auto hidden min-w-64 max-w-sm flex-1 items-center gap-2 rounded-lg border bg-card px-3 md:flex">
-          <Search className="size-4 text-muted-foreground" aria-hidden />
+        {/* Search Bar Input */}
+        <form onSubmit={handleSearchSubmit} className="hidden min-w-48 max-w-xs flex-1 items-center gap-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 px-3 md:flex shadow-xs focus-within:ring-2 focus-within:ring-primary/25">
+          <Search className="size-4 text-slate-500 dark:text-slate-400 shrink-0 stroke-[2]" aria-hidden />
           <input
             aria-label="Search posts"
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
-            className="h-10 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-            placeholder="Search stories, authors, tags"
+            className="h-9 min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-normal"
+            placeholder="Search stories, authors..."
           />
-        </div>
+        </form>
 
-        <Button
-          size="icon"
-          variant="ghost"
-          aria-label="Toggle theme"
-          onClick={toggleTheme}
-        >
-          {theme === "dark" ? <Sun /> : <Moon />}
-        </Button>
+        {/* Actions & Theme Toggle */}
+        <div className="flex items-center gap-2.5">
+          <Button
+            size="icon"
+            variant="ghost"
+            aria-label="Toggle theme"
+            onClick={toggleTheme}
+            className="rounded-xl"
+          >
+            {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+          </Button>
 
-        {user ? (
-          <>
-            <Link
-              to="/posts/new"
-              className={cn(buttonVariants(), "hidden sm:inline-flex")}
-            >
-                <Plus data-icon="inline-start" />
+          {user ? (
+            <div className="flex items-center gap-2.5">
+              <Link
+                to="/posts/new"
+                className={cn(buttonVariants({ size: "sm" }), "hidden sm:inline-flex rounded-xl font-bold gap-1.5 shadow-sm")}
+              >
+                <Plus className="size-4 stroke-[2.5]" />
                 Write
+              </Link>
+
+              <Link
+                to="/profile"
+                className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                title={`${user.first_name} ${user.last_name}`}
+              >
+                <div className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary font-bold text-xs uppercase border border-primary/20">
+                  {user.first_name?.[0] || <UserCircle className="size-5" />}
+                </div>
+              </Link>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => logout.mutate()}
+                disabled={logout.isPending}
+                className="rounded-xl font-semibold border-slate-300 dark:border-slate-700"
+              >
+                <LogOut className="size-3.5 mr-1" />
+                Sign out
+              </Button>
+            </div>
+          ) : (
+            <Link to="/login" className={cn(buttonVariants({ size: "sm" }), "rounded-xl font-bold")}>
+              Sign in
             </Link>
-            <Button
-              variant="outline"
-              onClick={() => logout.mutate()}
-              disabled={logout.isPending}
-            >
-              Sign out
-            </Button>
-          </>
-        ) : (
-          <Link to="/login" className={buttonVariants()}>
-            Sign in
-          </Link>
-        )}
+          )}
+        </div>
       </div>
     </header>
   )

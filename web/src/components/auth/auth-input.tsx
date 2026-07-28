@@ -37,7 +37,8 @@ export const AuthInput = React.forwardRef<HTMLInputElement, AuthInputProps>(
     const [isFocused, setIsFocused] = React.useState(false)
     const [isCapsLockOn, setIsCapsLockOn] = React.useState(false)
 
-    const inputId = id || React.useId()
+    const generatedId = React.useId()
+    const inputId = id || generatedId
     const inputType = isPassword ? (showPassword ? "text" : "password") : type
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

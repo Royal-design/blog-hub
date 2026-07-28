@@ -1,26 +1,14 @@
-import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2 } from "lucide-react"
 import * as React from "react"
-import { Controller, useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { motion } from "framer-motion"
+import { ArrowLeft, Loader2, Mail } from "lucide-react"
+import { useForm } from "react-hook-form"
 import { Link } from "react-router"
 import { toast } from "sonner"
 
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import { AuthCard } from "@/components/auth/auth-card"
+import { AuthLayout } from "@/components/auth/auth-layout"
+import { FormInput } from "@/components/forms/form-input"
 import {
   forgotPasswordSchema,
   type ForgotPasswordFormValues,
@@ -30,8 +18,10 @@ import { getErrorMessage } from "@/utils/error"
 
 export function ForgotPasswordPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false)
+
   const form = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
+    mode: "onChange",
     defaultValues: { email: "" },
   })
 
@@ -48,60 +38,62 @@ export function ForgotPasswordPage() {
   }
 
   return (
-    <div className="mx-auto grid min-h-[calc(100svh-8rem)] w-full max-w-md place-items-center">
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>Reset your password</CardTitle>
-          <CardDescription>
-            Enter your email and Blog Hub will send the reset link through the
-            backend.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form id="forgot-password-form" onSubmit={form.handleSubmit(submit)}>
-            <FieldGroup>
-              <Controller
-                name="email"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="forgot-password-email">
-                      Email
-                    </FieldLabel>
-                    <Input
-                      {...field}
-                      id="forgot-password-email"
-                      type="email"
-                      autoComplete="email"
-                      aria-invalid={fieldState.invalid}
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-            </FieldGroup>
-          </form>
-        </CardContent>
-        <CardFooter className="flex-col items-stretch gap-4">
-          <Button
+    <AuthLayout
+      brandBadgeText="Account Recovery"
+      brandHeadline="Reset Your Password Quickly & Securely"
+      brandSubheadline="Enter your registered email address below, and we will send you a secure link to reset your account password."
+    >
+      <AuthCard
+        title="Reset your password"
+        description="Enter your email and Blog Hub will send the reset link through the backend."
+        footer={
+          <p className="text-center text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium">
+            Remembered your password?{" "}
+            <Link
+              to="/login"
+              className="font-bold text-primary hover:underline transition-colors inline-flex items-center gap-1 ml-0.5"
+            >
+              <ArrowLeft className="size-3.5" />
+              Back to sign in
+            </Link>
+          </p>
+        }
+      >
+        <form
+          id="forgot-password-form"
+          onSubmit={form.handleSubmit(submit)}
+          className="space-y-5"
+        >
+          <FormInput
+            control={form.control}
+            name="email"
+            label="Email address"
+            type="email"
+            placeholder="name@example.com"
+            autoComplete="email"
+            leadingIcon={<Mail className="size-4 stroke-[2]" />}
+            disabled={isSubmitting}
+          />
+
+          <motion.button
             type="submit"
             form="forgot-password-form"
-            size="lg"
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
             disabled={isSubmitting}
+            className="relative flex h-12 w-full items-center justify-center rounded-xl bg-primary px-6 font-bold text-primary-foreground shadow-lg shadow-primary/30 hover:bg-primary/95 focus:outline-none focus:ring-4 focus:ring-primary/25 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer overflow-hidden group"
           >
-            {isSubmitting ? <Loader2 className="animate-spin" /> : null}
-            Send reset link
-          </Button>
-          <Link
-            className="text-center text-sm text-primary hover:underline"
-            to="/login"
-          >
-            Back to sign in
-          </Link>
-        </CardFooter>
-      </Card>
-    </div>
+            {isSubmitting ? (
+              <span className="flex items-center gap-2 text-sm font-bold">
+                <Loader2 className="size-4 animate-spin stroke-[2.5]" />
+                Sending reset link...
+              </span>
+            ) : (
+              <span className="text-sm font-bold">Send reset link</span>
+            )}
+          </motion.button>
+        </form>
+      </AuthCard>
+    </AuthLayout>
   )
 }

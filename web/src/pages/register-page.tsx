@@ -2,13 +2,13 @@ import * as React from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { motion } from "framer-motion"
 import { AtSign, Loader2, Lock, Mail, User } from "lucide-react"
-import { Controller, useForm } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { Link, Navigate } from "react-router"
 
 import { AuthCard } from "@/components/auth/auth-card"
-import { AuthInput } from "@/components/auth/auth-input"
 import { AuthLayout } from "@/components/auth/auth-layout"
-import { PasswordStrengthMeter } from "@/components/auth/password-strength-meter"
+import { FormInput } from "@/components/forms/form-input"
+import { FormPasswordInput } from "@/components/forms/form-password-input"
 import { useRegister } from "@/hooks/use-auth"
 import {
   registerSchema,
@@ -23,7 +23,6 @@ interface ExtendedRegisterFormValues extends RegisterFormValues {
 export function RegisterPage() {
   const user = useAuthStore((state) => state.user)
   const register = useRegister()
-  const [confirmPasswordError, setConfirmPasswordError] = React.useState<string | null>(null)
 
   const form = useForm<ExtendedRegisterFormValues>({
     resolver: zodResolver(registerSchema),
@@ -42,17 +41,22 @@ export function RegisterPage() {
     return <Navigate to="/" replace />
   }
 
-  const passwordValue = form.watch("password")
-  const confirmPasswordValue = form.watch("confirm_password")
-
   const handleSubmit = (values: ExtendedRegisterFormValues) => {
     if (values.confirm_password && values.confirm_password !== values.password) {
-      setConfirmPasswordError("Passwords do not match.")
+      form.setError("confirm_password", {
+        type: "manual",
+        message: "Passwords do not match.",
+      })
       return
     }
-    setConfirmPasswordError(null)
 
-    const { confirm_password, ...payload } = values
+    const payload = {
+      first_name: values.first_name,
+      last_name: values.last_name,
+      username: values.username,
+      email: values.email,
+      password: values.password,
+    }
     register.mutate(payload)
   }
 
@@ -84,121 +88,67 @@ export function RegisterPage() {
           className="space-y-4"
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <Controller
-              name="first_name"
+            <FormInput
               control={form.control}
-              render={({ field, fieldState }) => (
-                <AuthInput
-                  {...field}
-                  label="First name"
-                  placeholder="John"
-                  autoComplete="given-name"
-                  leadingIcon={<User className="size-4 stroke-[2]" />}
-                  error={fieldState.error?.message}
-                  isValid={!fieldState.invalid && Boolean(field.value)}
-                  disabled={register.isPending}
-                />
-              )}
+              name="first_name"
+              label="First name"
+              placeholder="John"
+              autoComplete="given-name"
+              leadingIcon={<User className="size-4 stroke-[2]" />}
+              disabled={register.isPending}
             />
 
-            <Controller
-              name="last_name"
+            <FormInput
               control={form.control}
-              render={({ field, fieldState }) => (
-                <AuthInput
-                  {...field}
-                  label="Last name"
-                  placeholder="Doe"
-                  autoComplete="family-name"
-                  leadingIcon={<User className="size-4 stroke-[2]" />}
-                  error={fieldState.error?.message}
-                  isValid={!fieldState.invalid && Boolean(field.value)}
-                  disabled={register.isPending}
-                />
-              )}
+              name="last_name"
+              label="Last name"
+              placeholder="Doe"
+              autoComplete="family-name"
+              leadingIcon={<User className="size-4 stroke-[2]" />}
+              disabled={register.isPending}
             />
           </div>
 
-          <Controller
+          <FormInput
+            control={form.control}
             name="username"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <AuthInput
-                {...field}
-                label="Username"
-                placeholder="johndoe"
-                autoComplete="username"
-                leadingIcon={<AtSign className="size-4 stroke-[2]" />}
-                error={fieldState.error?.message}
-                isValid={!fieldState.invalid && Boolean(field.value)}
-                disabled={register.isPending}
-              />
-            )}
+            label="Username"
+            placeholder="johndoe"
+            autoComplete="username"
+            leadingIcon={<AtSign className="size-4 stroke-[2]" />}
+            disabled={register.isPending}
           />
 
-          <Controller
+          <FormInput
+            control={form.control}
             name="email"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <AuthInput
-                {...field}
-                label="Email address"
-                type="email"
-                placeholder="john@example.com"
-                autoComplete="email"
-                leadingIcon={<Mail className="size-4 stroke-[2]" />}
-                error={fieldState.error?.message}
-                isValid={!fieldState.invalid && Boolean(field.value)}
-                disabled={register.isPending}
-              />
-            )}
+            label="Email address"
+            type="email"
+            placeholder="john@example.com"
+            autoComplete="email"
+            leadingIcon={<Mail className="size-4 stroke-[2]" />}
+            disabled={register.isPending}
           />
 
-          <Controller
+          <FormPasswordInput
+            control={form.control}
             name="password"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <div className="space-y-1">
-                <AuthInput
-                  {...field}
-                  label="Password"
-                  isPassword
-                  placeholder="••••••••"
-                  autoComplete="new-password"
-                  leadingIcon={<Lock className="size-4 stroke-[2]" />}
-                  error={fieldState.error?.message}
-                  isValid={!fieldState.invalid && Boolean(field.value)}
-                  disabled={register.isPending}
-                />
-                <PasswordStrengthMeter password={passwordValue} />
-              </div>
-            )}
+            label="Password"
+            placeholder="••••••••"
+            autoComplete="new-password"
+            leadingIcon={<Lock className="size-4 stroke-[2]" />}
+            showStrengthMeter
+            disabled={register.isPending}
           />
 
-          <Controller
-            name="confirm_password"
+          <FormPasswordInput
             control={form.control}
-            render={({ field }) => (
-              <AuthInput
-                {...field}
-                label="Confirm password"
-                isPassword
-                placeholder="••••••••"
-                autoComplete="new-password"
-                leadingIcon={<Lock className="size-4 stroke-[2]" />}
-                error={
-                  confirmPasswordError ||
-                  (confirmPasswordValue && confirmPasswordValue !== passwordValue
-                    ? "Passwords do not match."
-                    : undefined)
-                }
-                isValid={
-                  Boolean(confirmPasswordValue) &&
-                  confirmPasswordValue === passwordValue
-                }
-                disabled={register.isPending}
-              />
-            )}
+            name="confirm_password"
+            label="Confirm password"
+            placeholder="••••••••"
+            autoComplete="new-password"
+            leadingIcon={<Lock className="size-4 stroke-[2]" />}
+            disabled={register.isPending}
           />
 
           <motion.button

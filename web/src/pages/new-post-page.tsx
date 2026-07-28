@@ -1,31 +1,49 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { ImagePlus, Loader2, Send } from "lucide-react"
 import * as React from "react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { Eye, FileText, Loader2, Send } from "lucide-react"
+import { useForm, useWatch } from "react-hook-form"
 import { useNavigate } from "react-router"
 import { toast } from "sonner"
 
+import { FormImageUpload } from "@/components/forms/form-image-upload"
+import { FormInput } from "@/components/forms/form-input"
+import { FormSelect } from "@/components/forms/form-select"
+import { FormTextarea } from "@/components/forms/form-textarea"
 import { Button } from "@/components/ui/button"
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { queryKeys, useCategories, useTags } from "@/hooks/use-posts"
 import { postService } from "@/services/post.service"
 import type { PostStatus } from "@/types/post"
 import { getErrorMessage } from "@/utils/error"
+import { getReadingTime } from "@/utils/reading-time"
+
+interface NewPostFormValues {
+  title: string
+  excerpt: string
+  category_id: string
+  status: PostStatus
+  content: string
+}
 
 export function NewPostPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const categoriesQuery = useCategories()
   const tagsQuery = useTags()
+
   const [tagIds, setTagIds] = React.useState<string[]>([])
-  const [status, setStatus] = React.useState<PostStatus>("PUBLISHED")
+  const [coverImageFile, setCoverImageFile] = React.useState<File | null>(null)
+  const [isPreviewMode, setIsPreviewMode] = React.useState(false)
+
+  const form = useForm<NewPostFormValues>({
+    defaultValues: {
+      title: "",
+      excerpt: "",
+      category_id: "",
+      status: "PUBLISHED",
+      content: "",
+    },
+  })
 
   const createPost = useMutation({
     mutationFn: postService.createPost,
@@ -39,13 +57,22 @@ export function NewPostPage() {
     },
   })
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
+  const onSubmit = (values: NewPostFormValues) => {
+    if (!values.category_id) {
+      toast.error("Please select a category.")
+      return
+    }
 
-    const form = event.currentTarget
-    const formData = new FormData(form)
-    formData.set("status", status)
-    formData.delete("tag_ids")
+    const formData = new FormData()
+    formData.append("title", values.title)
+    formData.append("excerpt", values.excerpt)
+    formData.append("category_id", values.category_id)
+    formData.append("status", values.status)
+    formData.append("content", values.content)
+
+    if (coverImageFile) {
+      formData.append("cover_image", coverImageFile)
+    }
 
     tagIds.forEach((tagId) => {
       formData.append("tag_ids", tagId)
@@ -62,128 +89,202 @@ export function NewPostPage() {
     )
   }
 
+  const categoryOptions =
+    categoriesQuery.data?.map((c) => ({
+      value: c.id,
+      label: c.name,
+    })) || []
+
+  const statusOptions = [
+    { value: "PUBLISHED", label: "Published" },
+    { value: "DRAFT", label: "Draft" },
+  ]
+
+  const watchTitle = useWatch({ control: form.control, name: "title" })
+  const watchContent = useWatch({ control: form.control, name: "content" })
+  const watchCategoryId = useWatch({ control: form.control, name: "category_id" })
+  const selectedCategoryName =
+    categoriesQuery.data?.find((c) => c.id === watchCategoryId)?.name ||
+    "Uncategorized"
+
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-6">
-      <div>
-        <p className="text-sm font-medium text-primary">New post</p>
-        <h1 className="mt-2 text-3xl font-semibold">Write a story</h1>
+    <div className="mx-auto w-full max-w-4xl space-y-8">
+      {/* Page Title & View Switcher */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wider text-primary">
+            Story Editor
+          </p>
+          <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-foreground">
+            Write a new story
+          </h1>
+        </div>
+
+        <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl w-fit">
+          <button
+            type="button"
+            onClick={() => setIsPreviewMode(false)}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              !isPreviewMode
+                ? "bg-white dark:bg-slate-900 text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <FileText className="size-3.5 inline mr-1.5" />
+            Editor
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsPreviewMode(true)}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+              isPreviewMode
+                ? "bg-white dark:bg-slate-900 text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Eye className="size-3.5 inline mr-1.5" />
+            Preview
+          </button>
+        </div>
       </div>
 
-      <form
-        id="new-post-form"
-        className="rounded-lg border bg-card p-5 sm:p-6"
-        onSubmit={handleSubmit}
-      >
-        <FieldGroup>
-          <Field>
-            <FieldLabel htmlFor="post-title">Title</FieldLabel>
-            <Input id="post-title" name="title" required maxLength={160} />
-          </Field>
-
-          <Field>
-            <FieldLabel htmlFor="post-excerpt">Excerpt</FieldLabel>
-            <Textarea
-              id="post-excerpt"
-              name="excerpt"
-              rows={3}
-              placeholder="A short preview for readers"
-            />
-          </Field>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field>
-              <FieldLabel htmlFor="post-category">Category</FieldLabel>
-              <select
-                id="post-category"
-                name="category_id"
-                required
-                disabled={categoriesQuery.isLoading}
-                className="h-8 w-full rounded-lg border border-input bg-background px-2.5 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="">Select category</option>
-                {categoriesQuery.data?.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </Field>
-
-            <Field>
-              <FieldLabel htmlFor="post-status">Status</FieldLabel>
-              <select
-                id="post-status"
-                value={status}
-                onChange={(event) => setStatus(event.target.value as PostStatus)}
-                className="h-8 w-full rounded-lg border border-input bg-background px-2.5 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-              >
-                <option value="PUBLISHED">Published</option>
-                <option value="DRAFT">Draft</option>
-              </select>
-            </Field>
-          </div>
-
-          <Field>
-            <FieldLabel htmlFor="post-cover">Cover image</FieldLabel>
-            <div className="flex items-center gap-3">
-              <Input
-                id="post-cover"
-                name="cover_image"
-                type="file"
-                accept="image/*"
-              />
-              <ImagePlus className="size-4 shrink-0 text-muted-foreground" />
+      {isPreviewMode ? (
+        <Card className="rounded-2xl border border-slate-200/80 dark:border-slate-800/80 p-6 sm:p-8 shadow-md">
+          <div className="space-y-4">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+              {selectedCategoryName}
+            </span>
+            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-foreground leading-tight">
+              {watchTitle || "Untitled Story"}
+            </h1>
+            <p className="text-xs text-muted-foreground font-semibold">
+              Reading time: {getReadingTime(watchContent)}
+            </p>
+            <div className="pt-4 border-t border-slate-200 dark:border-slate-800 whitespace-pre-wrap text-base leading-8 text-foreground">
+              {watchContent || "Start typing in the editor tab to preview your story content..."}
             </div>
-          </Field>
+          </div>
+        </Card>
+      ) : (
+        <Card className="rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-md">
+          <CardHeader>
+            <CardTitle className="text-xl font-bold">Story Details</CardTitle>
+            <CardDescription className="text-xs font-medium">
+              Fill out the publication details below and send your story live.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form
+              id="new-post-form"
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-6"
+            >
+              <FormInput
+                control={form.control}
+                name="title"
+                label="Story Title"
+                placeholder="Enter a compelling title..."
+                maxLength={160}
+                disabled={createPost.isPending}
+              />
 
-          {tagsQuery.data?.length ? (
-            <Field>
-              <FieldLabel>Tags</FieldLabel>
-              <div className="flex flex-wrap gap-2">
-                {tagsQuery.data.map((tag) => {
-                  const checked = tagIds.includes(tag.id)
+              <FormTextarea
+                control={form.control}
+                name="excerpt"
+                label="Short Excerpt"
+                placeholder="A brief preview summary for readers..."
+                rows={3}
+                disabled={createPost.isPending}
+              />
 
-                  return (
-                    <label
-                      key={tag.id}
-                      className="inline-flex h-8 cursor-pointer items-center gap-2 rounded-lg border px-3 text-sm transition-colors has-checked:border-primary has-checked:bg-primary/10"
-                    >
-                      <input
-                        type="checkbox"
-                        className="size-3.5"
-                        checked={checked}
-                        onChange={() => toggleTag(tag.id)}
-                      />
-                      {tag.name}
-                    </label>
-                  )
-                })}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <FormSelect
+                  control={form.control}
+                  name="category_id"
+                  label="Category"
+                  options={categoryOptions}
+                  placeholder="Select category"
+                  disabled={createPost.isPending || categoriesQuery.isLoading}
+                />
+
+                <FormSelect
+                  control={form.control}
+                  name="status"
+                  label="Publish Status"
+                  options={statusOptions}
+                  disabled={createPost.isPending}
+                />
               </div>
-            </Field>
-          ) : null}
 
-          <Field>
-            <FieldLabel htmlFor="post-content">Content</FieldLabel>
-            <Textarea id="post-content" name="content" rows={14} required />
-          </Field>
+              <FormImageUpload
+                label="Cover Image"
+                description="Upload an image to display at the top of your story."
+                onFileSelect={(file) => setCoverImageFile(file)}
+              />
 
-          <Field orientation="horizontal">
-            <FieldContent>
-              <FieldDescription>
-                The post will be sent to the FastAPI create endpoint.
-              </FieldDescription>
-            </FieldContent>
-            <Button type="submit" disabled={createPost.isPending}>
-              {createPost.isPending ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                <Send />
-              )}
-              Publish
-            </Button>
-          </Field>
-        </FieldGroup>
-      </form>
+              {tagsQuery.data?.length ? (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold tracking-wider text-slate-800 dark:text-slate-100 uppercase">
+                    Tags
+                  </label>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {tagsQuery.data.map((tag) => {
+                      const checked = tagIds.includes(tag.id)
+
+                      return (
+                        <button
+                          key={tag.id}
+                          type="button"
+                          onClick={() => toggleTag(tag.id)}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                            checked
+                              ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                              : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700"
+                          }`}
+                        >
+                          <span>{checked ? "✓" : "+"}</span>
+                          <span>{tag.name}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ) : null}
+
+              <FormTextarea
+                control={form.control}
+                name="content"
+                label="Content"
+                placeholder="Write your story content here..."
+                rows={14}
+                disabled={createPost.isPending}
+              />
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <Button
+                  type="submit"
+                  form="new-post-form"
+                  size="lg"
+                  disabled={createPost.isPending}
+                  className="font-bold rounded-xl shadow-md gap-2"
+                >
+                  {createPost.isPending ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin stroke-[2.5]" />
+                      Publishing...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="size-4 stroke-[2.5]" />
+                      Publish Story
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

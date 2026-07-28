@@ -2,12 +2,13 @@ import * as React from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { motion } from "framer-motion"
 import { Loader2, Lock, Mail } from "lucide-react"
-import { Controller, useForm } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { Link, Navigate, useLocation } from "react-router"
 
 import { AuthCard } from "@/components/auth/auth-card"
-import { AuthInput } from "@/components/auth/auth-input"
 import { AuthLayout } from "@/components/auth/auth-layout"
+import { FormInput } from "@/components/forms/form-input"
+import { FormPasswordInput } from "@/components/forms/form-password-input"
 import { useLogin } from "@/hooks/use-auth"
 import { loginSchema, type LoginFormValues } from "@/schemas/auth.schema"
 import { useAuthStore } from "@/store/auth.store"
@@ -17,7 +18,6 @@ export function LoginPage() {
   const login = useLogin()
   const location = useLocation()
   const from = location.state?.from ?? "/"
-
   const [rememberMe, setRememberMe] = React.useState(true)
 
   const form = useForm<LoginFormValues>({
@@ -59,40 +59,25 @@ export function LoginPage() {
           onSubmit={form.handleSubmit((values) => login.mutate(values))}
           className="space-y-4"
         >
-          <Controller
-            name="email"
+          <FormInput
             control={form.control}
-            render={({ field, fieldState }) => (
-              <AuthInput
-                {...field}
-                label="Email address"
-                type="email"
-                placeholder="name@example.com"
-                autoComplete="email"
-                leadingIcon={<Mail className="size-4 stroke-[2]" />}
-                error={fieldState.error?.message}
-                isValid={!fieldState.invalid && Boolean(field.value)}
-                disabled={login.isPending}
-              />
-            )}
+            name="email"
+            label="Email address"
+            type="email"
+            placeholder="name@example.com"
+            autoComplete="email"
+            leadingIcon={<Mail className="size-4 stroke-[2]" />}
+            disabled={login.isPending}
           />
 
-          <Controller
-            name="password"
+          <FormPasswordInput
             control={form.control}
-            render={({ field, fieldState }) => (
-              <AuthInput
-                {...field}
-                label="Password"
-                isPassword
-                placeholder="••••••••"
-                autoComplete="current-password"
-                leadingIcon={<Lock className="size-4 stroke-[2]" />}
-                error={fieldState.error?.message}
-                isValid={!fieldState.invalid && Boolean(field.value)}
-                disabled={login.isPending}
-              />
-            )}
+            name="password"
+            label="Password"
+            placeholder="••••••••"
+            autoComplete="current-password"
+            leadingIcon={<Lock className="size-4 stroke-[2]" />}
+            disabled={login.isPending}
           />
 
           <div className="flex items-center justify-between pt-1 text-xs sm:text-sm">
@@ -103,12 +88,12 @@ export function LoginPage() {
                 onChange={(e) => setRememberMe(e.target.checked)}
                 className="size-4 rounded border-slate-300 dark:border-slate-700 text-primary focus:ring-primary/30 accent-primary cursor-pointer"
               />
-              <span className="font-semibold">Remember me</span>
+              <span className="font-semibold select-none">Remember me</span>
             </label>
 
             <Link
               to="/forgot-password"
-              className="font-bold text-primary hover:underline transition-colors"
+              className="font-bold text-primary hover:underline transition-colors shrink-0"
             >
               Forgot password?
             </Link>
