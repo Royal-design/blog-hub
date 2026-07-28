@@ -1,24 +1,14 @@
+import * as React from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2 } from "lucide-react"
+import { motion } from "framer-motion"
+import { AtSign, Loader2, Lock, Mail, User } from "lucide-react"
 import { Controller, useForm } from "react-hook-form"
 import { Link, Navigate } from "react-router"
 
-import { Button } from "@/components/ui/button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+import { AuthCard } from "@/components/auth/auth-card"
+import { AuthInput } from "@/components/auth/auth-input"
+import { AuthLayout } from "@/components/auth/auth-layout"
+import { PasswordStrengthMeter } from "@/components/auth/password-strength-meter"
 import { useRegister } from "@/hooks/use-auth"
 import {
   registerSchema,
@@ -26,17 +16,25 @@ import {
 } from "@/schemas/auth.schema"
 import { useAuthStore } from "@/store/auth.store"
 
+interface ExtendedRegisterFormValues extends RegisterFormValues {
+  confirm_password?: string
+}
+
 export function RegisterPage() {
   const user = useAuthStore((state) => state.user)
   const register = useRegister()
-  const form = useForm<RegisterFormValues>({
+  const [confirmPasswordError, setConfirmPasswordError] = React.useState<string | null>(null)
+
+  const form = useForm<ExtendedRegisterFormValues>({
     resolver: zodResolver(registerSchema),
+    mode: "onChange",
     defaultValues: {
       first_name: "",
       last_name: "",
       username: "",
       email: "",
       password: "",
+      confirm_password: "",
     },
   })
 
@@ -44,141 +42,184 @@ export function RegisterPage() {
     return <Navigate to="/" replace />
   }
 
+  const passwordValue = form.watch("password")
+  const confirmPasswordValue = form.watch("confirm_password")
+
+  const handleSubmit = (values: ExtendedRegisterFormValues) => {
+    if (values.confirm_password && values.confirm_password !== values.password) {
+      setConfirmPasswordError("Passwords do not match.")
+      return
+    }
+    setConfirmPasswordError(null)
+
+    const { confirm_password, ...payload } = values
+    register.mutate(payload)
+  }
+
   return (
-    <div className="mx-auto grid min-h-[calc(100svh-8rem)] w-full max-w-2xl place-items-center">
-      <Card className="w-full shadow-xl shadow-black/10">
-        <CardHeader>
-          <CardTitle>Create your account</CardTitle>
-          <CardDescription>
-            Start reading, writing, and building your audience on Blog Hub.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form
-            id="register-form"
-            onSubmit={form.handleSubmit((values) => register.mutate(values))}
-          >
-            <FieldGroup className="grid gap-4 sm:grid-cols-2">
-              <Controller
-                name="first_name"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="register-first-name">
-                      First name
-                    </FieldLabel>
-                    <Input
-                      {...field}
-                      id="register-first-name"
-                      autoComplete="given-name"
-                      aria-invalid={fieldState.invalid}
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-              <Controller
-                name="last_name"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="register-last-name">
-                      Last name
-                    </FieldLabel>
-                    <Input
-                      {...field}
-                      id="register-last-name"
-                      autoComplete="family-name"
-                      aria-invalid={fieldState.invalid}
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-              <Controller
-                name="username"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="register-username">Username</FieldLabel>
-                    <Input
-                      {...field}
-                      id="register-username"
-                      autoComplete="username"
-                      aria-invalid={fieldState.invalid}
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-              <Controller
-                name="email"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel htmlFor="register-email">Email</FieldLabel>
-                    <Input
-                      {...field}
-                      id="register-email"
-                      type="email"
-                      autoComplete="email"
-                      aria-invalid={fieldState.invalid}
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-              <Controller
-                name="password"
-                control={form.control}
-                render={({ field, fieldState }) => (
-                  <Field
-                    className="sm:col-span-2"
-                    data-invalid={fieldState.invalid}
-                  >
-                    <FieldLabel htmlFor="register-password">Password</FieldLabel>
-                    <Input
-                      {...field}
-                      id="register-password"
-                      type="password"
-                      autoComplete="new-password"
-                      aria-invalid={fieldState.invalid}
-                    />
-                    {fieldState.invalid && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-            </FieldGroup>
-          </form>
-        </CardContent>
-        <CardFooter className="flex-col items-stretch gap-4">
-          <Button
-            type="submit"
-            form="register-form"
-            size="lg"
-            disabled={register.isPending}
-          >
-            {register.isPending ? <Loader2 className="animate-spin" /> : null}
-            Create account
-          </Button>
-          <p className="text-center text-sm text-muted-foreground">
+    <AuthLayout
+      brandBadgeText="Join the Movement"
+      brandHeadline="Start Writing & Inspiring Readers Worldwide"
+      brandSubheadline="Create your account to unlock full access to original articles, save favorites, and share your unique voice."
+    >
+      <AuthCard
+        title="Create your account"
+        description="Join Blog Hub and start sharing your stories with the world."
+        className="max-w-[520px]"
+        footer={
+          <p className="text-center text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium">
             Already have an account?{" "}
-            <Link className="text-primary hover:underline" to="/login">
+            <Link
+              to="/login"
+              className="font-bold text-primary hover:underline transition-colors ml-0.5"
+            >
               Sign in
             </Link>
           </p>
-        </CardFooter>
-      </Card>
-    </div>
+        }
+      >
+        <form
+          id="register-form"
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className="space-y-4"
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <Controller
+              name="first_name"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <AuthInput
+                  {...field}
+                  label="First name"
+                  placeholder="John"
+                  autoComplete="given-name"
+                  leadingIcon={<User className="size-4 stroke-[2]" />}
+                  error={fieldState.error?.message}
+                  isValid={!fieldState.invalid && Boolean(field.value)}
+                  disabled={register.isPending}
+                />
+              )}
+            />
+
+            <Controller
+              name="last_name"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <AuthInput
+                  {...field}
+                  label="Last name"
+                  placeholder="Doe"
+                  autoComplete="family-name"
+                  leadingIcon={<User className="size-4 stroke-[2]" />}
+                  error={fieldState.error?.message}
+                  isValid={!fieldState.invalid && Boolean(field.value)}
+                  disabled={register.isPending}
+                />
+              )}
+            />
+          </div>
+
+          <Controller
+            name="username"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <AuthInput
+                {...field}
+                label="Username"
+                placeholder="johndoe"
+                autoComplete="username"
+                leadingIcon={<AtSign className="size-4 stroke-[2]" />}
+                error={fieldState.error?.message}
+                isValid={!fieldState.invalid && Boolean(field.value)}
+                disabled={register.isPending}
+              />
+            )}
+          />
+
+          <Controller
+            name="email"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <AuthInput
+                {...field}
+                label="Email address"
+                type="email"
+                placeholder="john@example.com"
+                autoComplete="email"
+                leadingIcon={<Mail className="size-4 stroke-[2]" />}
+                error={fieldState.error?.message}
+                isValid={!fieldState.invalid && Boolean(field.value)}
+                disabled={register.isPending}
+              />
+            )}
+          />
+
+          <Controller
+            name="password"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <div className="space-y-1">
+                <AuthInput
+                  {...field}
+                  label="Password"
+                  isPassword
+                  placeholder="••••••••"
+                  autoComplete="new-password"
+                  leadingIcon={<Lock className="size-4 stroke-[2]" />}
+                  error={fieldState.error?.message}
+                  isValid={!fieldState.invalid && Boolean(field.value)}
+                  disabled={register.isPending}
+                />
+                <PasswordStrengthMeter password={passwordValue} />
+              </div>
+            )}
+          />
+
+          <Controller
+            name="confirm_password"
+            control={form.control}
+            render={({ field }) => (
+              <AuthInput
+                {...field}
+                label="Confirm password"
+                isPassword
+                placeholder="••••••••"
+                autoComplete="new-password"
+                leadingIcon={<Lock className="size-4 stroke-[2]" />}
+                error={
+                  confirmPasswordError ||
+                  (confirmPasswordValue && confirmPasswordValue !== passwordValue
+                    ? "Passwords do not match."
+                    : undefined)
+                }
+                isValid={
+                  Boolean(confirmPasswordValue) &&
+                  confirmPasswordValue === passwordValue
+                }
+                disabled={register.isPending}
+              />
+            )}
+          />
+
+          <motion.button
+            type="submit"
+            form="register-form"
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+            disabled={register.isPending}
+            className="relative flex h-12 w-full items-center justify-center rounded-xl bg-primary px-6 font-bold text-primary-foreground shadow-lg shadow-primary/30 hover:bg-primary/95 focus:outline-none focus:ring-4 focus:ring-primary/25 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer overflow-hidden group mt-2"
+          >
+            {register.isPending ? (
+              <span className="flex items-center gap-2 text-sm font-bold">
+                <Loader2 className="size-4 animate-spin stroke-[2.5]" />
+                Creating account...
+              </span>
+            ) : (
+              <span className="text-sm font-bold">Create account</span>
+            )}
+          </motion.button>
+        </form>
+      </AuthCard>
+    </AuthLayout>
   )
 }
