@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
 import { Users, UserPlus } from "lucide-react"
-import { Link } from "react-router"
 
 import { PostCard } from "@/components/cards/post-card"
 import { EmptyState } from "@/components/common/empty-state"
@@ -11,6 +10,7 @@ import { PostCardSkeleton } from "@/components/skeletons/post-card-skeleton"
 import { usePosts } from "@/hooks/use-posts"
 import { followService } from "@/services/follow.service"
 import { useAuthStore } from "@/store/auth.store"
+import type { FollowingResponse } from "@/types/follow"
 import { getErrorMessage } from "@/utils/error"
 
 export function FollowingFeedPage() {
@@ -25,7 +25,7 @@ export function FollowingFeedPage() {
   })
 
   const followedUserIds = new Set(
-    followingQuery.data?.map((f) => f.following_id) ?? []
+    followingQuery.data?.map((f: FollowingResponse) => f.following_id) ?? []
   )
 
   // Filter only published posts from followed authors

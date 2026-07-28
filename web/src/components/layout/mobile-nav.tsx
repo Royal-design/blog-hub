@@ -1,4 +1,4 @@
-import { Bookmark, Compass, Home, LayoutDashboard, Plus, User } from "lucide-react"
+import { Bookmark, Compass, Home, Plus, User } from "lucide-react"
 import { NavLink } from "react-router"
 
 import { cn } from "@/lib/utils"

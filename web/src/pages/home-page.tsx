@@ -1,6 +1,5 @@
-import { useQuery } from "@tanstack/react-query"
 import { motion } from "framer-motion"
-import { FileText, Sparkles, TrendingUp } from "lucide-react"
+import { FileText, Sparkles } from "lucide-react"
 import { Link } from "react-router"
 
 import { PostCard } from "@/components/cards/post-card"

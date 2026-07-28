@@ -145,7 +145,7 @@ export function EditPostPage() {
 
   if (postQuery.isLoading) return <PageLoader />
   if (postQuery.isError || !postQuery.data) {
-    return <ErrorState message="Could not load the story for editing." />
+    return <ErrorState description="Could not load the story for editing." />
   }
 
   return (

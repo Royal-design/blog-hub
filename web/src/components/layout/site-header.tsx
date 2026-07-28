@@ -1,5 +1,5 @@
 import * as React from "react"
-import { BookOpen, LogOut, Moon, Plus, Search, Sun, UserCircle } from "lucide-react"
+import { BookOpen, LogOut, Moon, Plus, Search, Sun } from "lucide-react"
 import { Link, NavLink, useNavigate } from "react-router"
 
 import { Button } from "@/components/ui/button"

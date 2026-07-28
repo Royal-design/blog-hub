@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import { Bookmark, Sparkles } from "lucide-react"
-import { Link } from "react-router"
+import { Bookmark } from "lucide-react"
 
 import { PostCard } from "@/components/cards/post-card"
 import { EmptyState } from "@/components/common/empty-state"

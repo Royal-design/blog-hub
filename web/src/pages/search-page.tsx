@@ -1,6 +1,6 @@
 import * as React from "react"
 import { useQuery } from "@tanstack/react-query"
-import { FileText, Search, UserCheck, Users } from "lucide-react"
+import { FileText, Search, Users } from "lucide-react"
 import { useSearchParams } from "react-router"
 
 import { PostCard } from "@/components/cards/post-card"

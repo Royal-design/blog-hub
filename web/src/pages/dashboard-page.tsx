@@ -4,7 +4,6 @@ import { motion } from "framer-motion"
 import {
   ArrowUpRight,
   Bookmark,
-  ChevronDown,
   Eye,
   FileText,
   Heart,

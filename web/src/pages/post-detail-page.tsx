@@ -1,7 +1,7 @@
 import * as React from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
-import { ArrowLeft, MessageSquare, Send, Share2, Sparkles, UserCircle } from "lucide-react"
+import { ArrowLeft, MessageSquare, Send, Share2, Sparkles } from "lucide-react"
 import { Link, useParams } from "react-router"
 import { toast } from "sonner"
 

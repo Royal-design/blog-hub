@@ -11,7 +11,6 @@ import {
   ShieldCheck,
   Sparkles,
   User,
-  UserCircle,
   X,
 } from "lucide-react"
 import { useForm } from "react-hook-form"

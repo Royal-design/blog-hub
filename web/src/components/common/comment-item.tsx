@@ -2,7 +2,7 @@ import * as React from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { formatDistanceToNow } from "date-fns"
 import { AnimatePresence, motion } from "framer-motion"
-import { CornerDownRight, Edit2, Reply, Send, Trash2, UserCircle } from "lucide-react"
+import { CornerDownRight, Edit2, Reply, Send, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { commentService } from "@/services/comment.service"
