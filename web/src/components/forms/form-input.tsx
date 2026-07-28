@@ -84,7 +84,7 @@ export function FormInput<
                 disabled={disabled}
                 aria-invalid={isInvalid}
                 className={cn(
-                  "h-12 w-full rounded-xl border border-slate-300 bg-white/90 text-sm font-semibold text-slate-900 shadow-xs transition-all duration-200 outline-none placeholder:font-normal placeholder:text-slate-400 dark:border-slate-700 dark:bg-slate-900/90 dark:text-slate-50 dark:placeholder:text-slate-500",
+                  "h-12 w-full rounded-xl border border-slate-300 bg-white/90 text-sm font-semibold text-slate-900 shadow-xs transition-all duration-200 outline-none placeholder:font-normal placeholder:text-slate-400 dark:border-slate-700 dark:text-slate-50 dark:placeholder:text-slate-500",
                   leadingIcon ? "pl-11" : "pl-4",
                   trailingIcon || isValid ? "pr-11" : "pr-4",
                   isInvalid &&

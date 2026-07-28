@@ -1,6 +1,6 @@
-import * as React from "react"
 import { AnimatePresence, motion } from "framer-motion"
-import { AlertCircle, ChevronDown } from "lucide-react"
+import { AlertCircle, Check, ChevronDown } from "lucide-react"
+import * as React from "react"
 import {
   type Control,
   Controller,
@@ -19,13 +19,15 @@ export interface FormSelectOption {
 export interface FormSelectProps<
   TFieldValues extends FieldValues = FieldValues,
   TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
-> extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, "name"> {
+> {
   control: Control<TFieldValues>
   name: TName
   label: string
   options: FormSelectOption[]
   placeholder?: string
   containerClassName?: string
+  className?: string
+  disabled?: boolean
 }
 
 export function FormSelect<
@@ -38,12 +40,25 @@ export function FormSelect<
   options,
   placeholder = "Select an option",
   containerClassName,
-  id,
   className,
   disabled,
-  ...props
 }: FormSelectProps<TFieldValues, TName>) {
-  const selectId = id || `form-select-${name}`
+  const [isOpen, setIsOpen] = React.useState(false)
+  const containerRef = React.useRef<HTMLDivElement>(null)
+
+  // Handle click outside to close dropdown
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   return (
     <Controller
@@ -51,48 +66,89 @@ export function FormSelect<
       control={control}
       render={({ field, fieldState }) => {
         const isInvalid = Boolean(fieldState.error)
+        const selectedOption = options.find((opt) => opt.value === field.value)
 
         return (
           <Field
             data-invalid={isInvalid}
             className={cn("w-full space-y-1.5", containerClassName)}
           >
-            <FieldLabel
-              htmlFor={selectId}
-              className="text-xs font-bold tracking-wider text-slate-800 dark:text-slate-100 uppercase"
-            >
+            <FieldLabel className="text-xs font-bold tracking-wider text-slate-800 uppercase dark:text-slate-100">
               {label}
             </FieldLabel>
 
-            <div className="relative flex items-center">
-              <select
-                {...field}
-                id={selectId}
-                value={field.value ?? ""}
+            <div ref={containerRef} className="relative w-full">
+              {/* Trigger Button */}
+              <button
+                type="button"
                 disabled={disabled}
-                aria-invalid={isInvalid}
+                onClick={() => !disabled && setIsOpen((prev) => !prev)}
                 className={cn(
-                  "w-full h-12 appearance-none rounded-xl bg-white/90 dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-50 text-sm font-semibold pl-4 pr-10 transition-all duration-200 outline-none shadow-xs cursor-pointer",
-                  !field.value && "text-slate-400 dark:text-slate-500 font-normal",
+                  "flex h-12 w-full cursor-pointer items-center justify-between rounded-xl border border-slate-300 bg-white/90 px-4 text-left text-sm font-semibold text-slate-900 shadow-xs transition-all duration-200 outline-none dark:border-slate-700 dark:bg-secondary dark:text-slate-50",
+                  !field.value &&
+                    "font-normal text-slate-400 dark:text-slate-500",
+                  isOpen && "border-primary ring-2 ring-primary/25",
                   isInvalid &&
-                    "border-rose-600 ring-4 ring-rose-600/20 text-rose-950 dark:text-rose-100 dark:border-rose-500 dark:ring-rose-500/25",
+                    "border-rose-600 text-rose-950 ring-4 ring-rose-600/20 dark:border-rose-500 dark:text-rose-100 dark:ring-rose-500/25",
                   disabled &&
-                    "opacity-60 cursor-not-allowed bg-slate-100 dark:bg-slate-800",
+                    "cursor-not-allowed bg-slate-100 opacity-60 dark:bg-slate-800",
                   className
                 )}
-                {...props}
               >
-                <option value="" disabled className="text-slate-400">
-                  {placeholder}
-                </option>
-                {options.map((opt) => (
-                  <option key={opt.value} value={opt.value} className="text-slate-900 dark:text-slate-100">
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+                <span className="truncate">
+                  {selectedOption ? selectedOption.label : placeholder}
+                </span>
+                <ChevronDown
+                  className={cn(
+                    "size-4 shrink-0 text-slate-500 transition-transform duration-200",
+                    isOpen && "rotate-180 text-primary"
+                  )}
+                />
+              </button>
 
-              <ChevronDown className="absolute right-3.5 size-4 pointer-events-none text-slate-500 dark:text-slate-400 stroke-[2]" />
+              {/* Options Popover List */}
+              <AnimatePresence>
+                {isOpen && (
+                  <motion.ul
+                    initial={{ opacity: 0, y: 4, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
+                    className="absolute z-50 mt-1.5 max-h-60 w-full overflow-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95"
+                  >
+                    {options.length ? (
+                      options.map((opt) => {
+                        const isSelected = opt.value === field.value
+
+                        return (
+                          <li
+                            key={opt.value}
+                            onClick={() => {
+                              field.onChange(opt.value)
+                              setIsOpen(false)
+                            }}
+                            className={cn(
+                              "flex cursor-pointer items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-semibold transition-colors",
+                              isSelected
+                                ? "bg-primary/10 font-extrabold text-primary"
+                                : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                            )}
+                          >
+                            <span className="truncate">{opt.label}</span>
+                            {isSelected && (
+                              <Check className="size-4 shrink-0 text-primary" />
+                            )}
+                          </li>
+                        )
+                      })
+                    ) : (
+                      <li className="p-3 text-center text-xs text-muted-foreground italic">
+                        No options available
+                      </li>
+                    )}
+                  </motion.ul>
+                )}
+              </AnimatePresence>
             </div>
 
             <AnimatePresence mode="wait">

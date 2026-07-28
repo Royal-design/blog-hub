@@ -8,8 +8,8 @@ class UserRole(StrEnum):
     
 
 class PostStatus(StrEnum):
-    DRAFT = "draft"
-    PUBLISHED = "published"
+    DRAFT = "Draft"
+    PUBLISHED = "Published"
     
 class AuthProvider(StrEnum):
     CREDENTIALS = "credentials"

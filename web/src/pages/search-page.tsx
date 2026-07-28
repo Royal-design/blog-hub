@@ -4,6 +4,7 @@ import { Search } from "lucide-react"
 import { PostCard } from "@/components/cards/post-card"
 import { EmptyState } from "@/components/common/empty-state"
 import { FormSearch } from "@/components/forms/form-search"
+import { PostCardSkeleton } from "@/components/skeletons/post-card-skeleton"
 import { useCategories, usePosts } from "@/hooks/use-posts"
 import { useAppStore } from "@/store/app.store"
 
@@ -26,7 +27,15 @@ export function SearchPage() {
         return matchesCategory
       }
 
-      const matchesText = [post.title, post.excerpt, post.content, post.category.name]
+      const matchesText = [
+        post.title,
+        post.excerpt,
+        post.content,
+        post.category?.name,
+        post.author?.first_name,
+        post.author?.last_name,
+        post.author?.username,
+      ]
         .filter(Boolean)
         .some((value) => value?.toLowerCase().includes(normalizedQuery))
 
@@ -42,7 +51,7 @@ export function SearchPage() {
             Search Stories & Perspectives
           </h1>
           <p className="mt-1 text-sm text-muted-foreground font-medium">
-            Explore articles by title, content keywords, or categories.
+            Explore articles by title, content keywords, author, or categories.
           </p>
         </div>
 
@@ -88,7 +97,13 @@ export function SearchPage() {
       </div>
 
       {/* Results Grid */}
-      {posts.length ? (
+      {postsQuery.isLoading ? (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }, (_, index) => (
+            <PostCardSkeleton key={index} />
+          ))}
+        </div>
+      ) : posts.length ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {posts.map((post) => (
             <PostCard key={post.id} post={post} />

@@ -1,4 +1,3 @@
-import * as React from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { motion } from "framer-motion"
 import { AtSign, Loader2, Lock, Mail, User } from "lucide-react"
@@ -10,21 +9,14 @@ import { AuthLayout } from "@/components/auth/auth-layout"
 import { FormInput } from "@/components/forms/form-input"
 import { FormPasswordInput } from "@/components/forms/form-password-input"
 import { useRegister } from "@/hooks/use-auth"
-import {
-  registerSchema,
-  type RegisterFormValues,
-} from "@/schemas/auth.schema"
+import { registerSchema, type RegisterFormValues } from "@/schemas/auth.schema"
 import { useAuthStore } from "@/store/auth.store"
-
-interface ExtendedRegisterFormValues extends RegisterFormValues {
-  confirm_password?: string
-}
 
 export function RegisterPage() {
   const user = useAuthStore((state) => state.user)
   const register = useRegister()
 
-  const form = useForm<ExtendedRegisterFormValues>({
+  const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     mode: "onChange",
     defaultValues: {
@@ -41,23 +33,14 @@ export function RegisterPage() {
     return <Navigate to="/" replace />
   }
 
-  const handleSubmit = (values: ExtendedRegisterFormValues) => {
-    if (values.confirm_password && values.confirm_password !== values.password) {
-      form.setError("confirm_password", {
-        type: "manual",
-        message: "Passwords do not match.",
-      })
-      return
-    }
-
-    const payload = {
+  const handleSubmit = (values: RegisterFormValues) => {
+    register.mutate({
       first_name: values.first_name,
       last_name: values.last_name,
       username: values.username,
       email: values.email,
       password: values.password,
-    }
-    register.mutate(payload)
+    })
   }
 
   return (
@@ -71,11 +54,11 @@ export function RegisterPage() {
         description="Join Blog Hub and start sharing your stories with the world."
         className="max-w-[520px]"
         footer={
-          <p className="text-center text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium">
+          <p className="text-center text-xs font-medium text-slate-700 sm:text-sm dark:text-slate-300">
             Already have an account?{" "}
             <Link
               to="/login"
-              className="font-bold text-primary hover:underline transition-colors ml-0.5"
+              className="ml-0.5 font-bold text-primary transition-colors hover:underline"
             >
               Sign in
             </Link>
@@ -87,7 +70,7 @@ export function RegisterPage() {
           onSubmit={form.handleSubmit(handleSubmit)}
           className="space-y-4"
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
             <FormInput
               control={form.control}
               name="first_name"
@@ -157,7 +140,7 @@ export function RegisterPage() {
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.98 }}
             disabled={register.isPending}
-            className="relative flex h-12 w-full items-center justify-center rounded-xl bg-primary px-6 font-bold text-primary-foreground shadow-lg shadow-primary/30 hover:bg-primary/95 focus:outline-none focus:ring-4 focus:ring-primary/25 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer overflow-hidden group mt-2"
+            className="group relative mt-2 flex h-12 w-full cursor-pointer items-center justify-center overflow-hidden rounded-xl bg-primary px-6 font-bold text-primary-foreground shadow-lg shadow-primary/30 transition-all duration-200 hover:bg-primary/95 focus:ring-4 focus:ring-primary/25 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
           >
             {register.isPending ? (
               <span className="flex items-center gap-2 text-sm font-bold">

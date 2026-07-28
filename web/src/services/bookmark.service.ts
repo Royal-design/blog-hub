@@ -1,9 +1,11 @@
 import { api } from "@/api/axios"
+import type { ApiSuccess } from "@/types/api"
+import type { LikedPost } from "@/types/like"
 
 export const bookmarkService = {
   async getMyBookmarks() {
-    const response = await api.get("/bookmarks/me")
-    return response.data
+    const response = await api.get<ApiSuccess<LikedPost[]>>("/bookmarks/me")
+    return response.data.data
   },
 
   async bookmarkPost(postId: string) {
@@ -12,7 +14,6 @@ export const bookmarkService = {
   },
 
   async removeBookmark(postId: string) {
-    const response = await api.delete(`/bookmarks/posts/${postId}`)
-    return response.data
+    await api.delete(`/bookmarks/posts/${postId}`)
   },
 }

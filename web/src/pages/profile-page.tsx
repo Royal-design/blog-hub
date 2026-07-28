@@ -1,12 +1,9 @@
 import * as React from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { AnimatePresence, motion } from "framer-motion"
 import {
   AtSign,
   Camera,
-  Check,
   CheckCircle2,
-  FileText,
   Loader2,
   Mail,
   Plus,
@@ -29,6 +26,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { profileService } from "@/services/profile.service"
 import { getErrorMessage } from "@/utils/error"
+import { getInitials } from "@/utils/initials"
 
 interface ProfileFormValues {
   first_name: string
@@ -152,8 +150,13 @@ export function ProfilePage() {
                     className="size-full object-cover"
                   />
                 ) : (
-                  <div className="size-full grid place-items-center bg-primary/10 text-primary">
-                    <UserCircle className="size-20" aria-hidden />
+                  <div className="size-full grid place-items-center bg-primary/10 text-primary font-extrabold text-3xl sm:text-4xl tracking-wider">
+                    {getInitials(
+                      `${profile?.first_name || ""} ${profile?.last_name || ""}`,
+                      profile?.first_name,
+                      profile?.last_name,
+                      profile?.username
+                    )}
                   </div>
                 )}
                 {/* Upload Hover Overlay */}

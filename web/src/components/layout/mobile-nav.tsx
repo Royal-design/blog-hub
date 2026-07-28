@@ -1,12 +1,12 @@
-import { Home, LayoutDashboard, Plus, Search, User } from "lucide-react"
+import { Bookmark, Compass, Home, LayoutDashboard, Plus, User } from "lucide-react"
 import { NavLink } from "react-router"
 
 import { cn } from "@/lib/utils"
 
 const items = [
   { label: "Home", href: "/", icon: Home },
-  { label: "Search", href: "/search", icon: Search },
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Explore", href: "/explore", icon: Compass },
+  { label: "Bookmarks", href: "/bookmarks", icon: Bookmark },
   { label: "Profile", href: "/profile", icon: User },
 ]
 

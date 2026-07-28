@@ -8,13 +8,16 @@ import { useLogout } from "@/hooks/use-auth"
 import { useAppStore } from "@/store/app.store"
 import { useAuthStore } from "@/store/auth.store"
 import { useThemeStore } from "@/store/theme.store"
+import { getInitials } from "@/utils/initials"
 import { cn } from "@/lib/utils"
 
 const navItems = [
   { label: "Home", href: "/" },
+  { label: "Explore", href: "/explore" },
+  { label: "Following", href: "/following" },
+  { label: "Bookmarks", href: "/bookmarks" },
   { label: "Dashboard", href: "/dashboard" },
   { label: "Profile", href: "/profile" },
-  { label: "Search", href: "/search" },
 ]
 
 export function SiteHeader() {
@@ -98,12 +101,25 @@ export function SiteHeader() {
 
               <Link
                 to="/profile"
-                className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                className="flex items-center gap-2 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                 title={`${user.first_name} ${user.last_name}`}
               >
-                <div className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary font-bold text-xs uppercase border border-primary/20">
-                  {user.first_name?.[0] || <UserCircle className="size-5" />}
-                </div>
+                {user.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt=""
+                    className="size-8 rounded-lg object-cover ring-1 ring-primary/20"
+                  />
+                ) : (
+                  <div className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary font-extrabold text-xs uppercase border border-primary/20 tracking-wider">
+                    {getInitials(
+                      `${user.first_name || ""} ${user.last_name || ""}`,
+                      user.first_name,
+                      user.last_name,
+                      user.username
+                    )}
+                  </div>
+                )}
               </Link>
 
               <Button

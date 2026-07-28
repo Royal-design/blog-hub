@@ -2,6 +2,12 @@ import { api } from "@/api/axios"
 import type { ApiSuccess } from "@/types/api"
 import type { AuthResponse, LoginPayload, RegisterPayload } from "@/types/auth"
 
+export type ChangePasswordPayload = {
+  current_password: string
+  new_password: string
+  confirm_password: string
+}
+
 export const authService = {
   async register(payload: RegisterPayload) {
     const response = await api.post<ApiSuccess<AuthResponse>>(
@@ -38,5 +44,9 @@ export const authService = {
       token,
       new_password: newPassword,
     })
+  },
+
+  async changePassword(payload: ChangePasswordPayload) {
+    await api.post("/auth/change-password", payload)
   },
 }

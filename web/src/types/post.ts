@@ -1,4 +1,4 @@
-export type PostStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED"
+export type PostStatus = "Draft" | "Published" | "Archived"
 
 export type PostAuthor = {
   id: string

@@ -5,9 +5,39 @@ import { AppShell } from "@/components/layout/app-shell"
 import { PageLoader } from "@/components/loaders/page-loader"
 import { ProtectedRoute } from "@/routes/protected-route"
 
+const BookmarksPage = lazy(() =>
+  import("@/pages/bookmarks-page").then((module) => ({
+    default: module.BookmarksPage,
+  }))
+)
 const DashboardPage = lazy(() =>
   import("@/pages/dashboard-page").then((module) => ({
     default: module.DashboardPage,
+  }))
+)
+const EditPostPage = lazy(() =>
+  import("@/pages/edit-post-page").then((module) => ({
+    default: module.EditPostPage,
+  }))
+)
+const ExplorePage = lazy(() =>
+  import("@/pages/explore-page").then((module) => ({
+    default: module.ExplorePage,
+  }))
+)
+const FollowersPage = lazy(() =>
+  import("@/pages/followers-page").then((module) => ({
+    default: module.FollowersPage,
+  }))
+)
+const FollowingFeedPage = lazy(() =>
+  import("@/pages/following-feed-page").then((module) => ({
+    default: module.FollowingFeedPage,
+  }))
+)
+const FollowingListPage = lazy(() =>
+  import("@/pages/following-list-page").then((module) => ({
+    default: module.FollowingListPage,
   }))
 )
 const ForgotPasswordPage = lazy(() =>
@@ -21,14 +51,14 @@ const HomePage = lazy(() =>
 const LoginPage = lazy(() =>
   import("@/pages/login-page").then((module) => ({ default: module.LoginPage }))
 )
-const NotFoundPage = lazy(() =>
-  import("@/pages/not-found-page").then((module) => ({
-    default: module.NotFoundPage,
-  }))
-)
 const NewPostPage = lazy(() =>
   import("@/pages/new-post-page").then((module) => ({
     default: module.NewPostPage,
+  }))
+)
+const NotFoundPage = lazy(() =>
+  import("@/pages/not-found-page").then((module) => ({
+    default: module.NotFoundPage,
   }))
 )
 const PostDetailPage = lazy(() =>
@@ -60,6 +90,46 @@ export function AppRoutes() {
           <Route path="register" element={<RegisterPage />} />
           <Route path="forgot-password" element={<ForgotPasswordPage />} />
           <Route
+            path="explore"
+            element={
+              <ProtectedRoute>
+                <ExplorePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="following"
+            element={
+              <ProtectedRoute>
+                <FollowingFeedPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="bookmarks"
+            element={
+              <ProtectedRoute>
+                <BookmarksPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="followers"
+            element={
+              <ProtectedRoute>
+                <FollowersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="following-list"
+            element={
+              <ProtectedRoute>
+                <FollowingListPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="dashboard"
             element={
               <ProtectedRoute>
@@ -88,6 +158,14 @@ export function AppRoutes() {
             element={
               <ProtectedRoute>
                 <NewPostPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="posts/:slug/edit"
+            element={
+              <ProtectedRoute>
+                <EditPostPage />
               </ProtectedRoute>
             }
           />

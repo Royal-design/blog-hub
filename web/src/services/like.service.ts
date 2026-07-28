@@ -1,13 +1,19 @@
 import { api } from "@/api/axios"
+import type { ApiSuccess } from "@/types/api"
+import type { Like, LikedPost } from "@/types/like"
 
 export const likeService = {
+  async getMyLikes() {
+    const response = await api.get<ApiSuccess<LikedPost[]>>("/likes/me")
+    return response.data.data
+  },
+
   async likePost(postId: string) {
-    const response = await api.post(`/likes/posts/${postId}`)
-    return response.data
+    const response = await api.post<ApiSuccess<Like>>(`/likes/posts/${postId}`)
+    return response.data.data
   },
 
   async unlikePost(postId: string) {
-    const response = await api.delete(`/likes/posts/${postId}`)
-    return response.data
+    await api.delete(`/likes/posts/${postId}`)
   },
 }

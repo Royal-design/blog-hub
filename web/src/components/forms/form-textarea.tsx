@@ -1,6 +1,6 @@
-import * as React from "react"
 import { AnimatePresence, motion } from "framer-motion"
 import { AlertCircle } from "lucide-react"
+import * as React from "react"
 import {
   type Control,
   Controller,
@@ -8,11 +8,7 @@ import {
   type FieldValues,
 } from "react-hook-form"
 
-import {
-  Field,
-  FieldError,
-  FieldLabel,
-} from "@/components/ui/field"
+import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 
@@ -61,7 +57,7 @@ export function FormTextarea<
             <div className="flex items-center justify-between">
               <FieldLabel
                 htmlFor={textareaId}
-                className="text-xs font-bold tracking-wider text-slate-800 dark:text-slate-100 uppercase"
+                className="text-xs font-bold tracking-wider text-slate-800 uppercase dark:text-slate-100"
               >
                 {label}
               </FieldLabel>
@@ -82,11 +78,11 @@ export function FormTextarea<
               maxLength={maxLength}
               aria-invalid={isInvalid}
               className={cn(
-                "w-full rounded-xl bg-white/90 dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-50 text-sm font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500 placeholder:font-normal p-3.5 transition-all duration-200 outline-none shadow-xs resize-y min-h-24",
+                "max-h-[200px] min-h-24 w-full resize-none rounded-xl border border-slate-300 bg-white/90 p-3.5 text-sm font-medium text-slate-900 shadow-xs transition-all duration-200 outline-none placeholder:font-normal placeholder:text-slate-400 dark:border-slate-700 dark:text-slate-50 dark:placeholder:text-slate-500",
                 isInvalid &&
-                  "border-rose-600 ring-4 ring-rose-600/20 text-rose-950 dark:text-rose-100 dark:border-rose-500 dark:ring-rose-500/25",
+                  "border-rose-600 text-rose-950 ring-4 ring-rose-600/20 dark:border-rose-500 dark:text-rose-100 dark:ring-rose-500/25",
                 disabled &&
-                  "opacity-60 cursor-not-allowed bg-slate-100 dark:bg-slate-800",
+                  "cursor-not-allowed bg-slate-100 opacity-60 dark:bg-slate-800",
                 className
               )}
               {...props}

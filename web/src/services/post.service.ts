@@ -25,6 +25,13 @@ export const postService = {
     return response.data.data
   },
 
+  async updatePost(postId: string, payload: FormData) {
+    const response = await api.put<ApiSuccess<Post>>(`/posts/${postId}`, payload, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })
+    return response.data.data
+  },
+
   async deletePost(postId: string) {
     const response = await api.delete<ApiSuccess<void>>(`/posts/${postId}`)
     return response.data

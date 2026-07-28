@@ -1,27 +1,39 @@
-import * as React from "react"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { motion } from "framer-motion"
 import {
   ArrowUpRight,
-  BarChart3,
   Bookmark,
+  ChevronDown,
   Eye,
   FileText,
+  Heart,
+  Pencil,
   Plus,
   Trash2,
-  TrendingUp,
   Users,
   type LucideIcon,
 } from "lucide-react"
+// import * as React from "react"
 import { Link } from "react-router"
 import { toast } from "sonner"
 
 import { EmptyState } from "@/components/common/empty-state"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { queryKeys, usePosts } from "@/hooks/use-posts"
+import { bookmarkService } from "@/services/bookmark.service"
+import { followService } from "@/services/follow.service"
+import { likeService } from "@/services/like.service"
 import { postService } from "@/services/post.service"
 import { useAuthStore } from "@/store/auth.store"
+import type { Post, PostStatus } from "@/types/post"
+import { getErrorMessage } from "@/utils/error"
 import { getReadingTime } from "@/utils/reading-time"
 
 export function DashboardPage() {
@@ -32,32 +44,89 @@ export function DashboardPage() {
   const myPosts =
     postsQuery.data?.filter((post) => post.author_id === user?.id) ?? []
 
+  const publishedCount = myPosts.filter((p) => p.status === "Published").length
+  const draftCount = myPosts.filter((p) => p.status === "Draft").length
+
+  const bookmarksQuery = useQuery({
+    queryKey: ["bookmarks", "me"],
+    queryFn: bookmarkService.getMyBookmarks,
+    enabled: Boolean(user),
+    staleTime: 60_000,
+  })
+
+  const likesQuery = useQuery({
+    queryKey: ["likes", "me"],
+    queryFn: likeService.getMyLikes,
+    enabled: Boolean(user),
+    staleTime: 60_000,
+  })
+
+  const followersQuery = useQuery({
+    queryKey: ["followers", user?.id],
+    queryFn: () => followService.getFollowers(user?.id ?? ""),
+    enabled: Boolean(user?.id),
+    staleTime: 60_000,
+  })
+
+  const followingQuery = useQuery({
+    queryKey: ["following", user?.id],
+    queryFn: () => followService.getFollowing(user?.id ?? ""),
+    enabled: Boolean(user?.id),
+    staleTime: 60_000,
+  })
+
   const deletePostMutation = useMutation({
     mutationFn: postService.deletePost,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.posts })
       toast.success("Post deleted successfully.")
     },
-    onError: () => {
-      toast.error("Failed to delete post.")
+    onError: (err) => {
+      toast.error(getErrorMessage(err))
+    },
+  })
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({
+      post,
+      newStatus,
+    }: {
+      post: Post
+      newStatus: PostStatus
+    }) => {
+      const formData = new FormData()
+      formData.append("title", post.title)
+      formData.append("content", post.content)
+      if (post.excerpt) formData.append("excerpt", post.excerpt)
+      formData.append("category_id", post.category_id)
+      formData.append("status", newStatus)
+
+      return postService.updatePost(post.id, formData)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.posts })
+      toast.success("Post status updated successfully.")
+    },
+    onError: (err) => {
+      toast.error(getErrorMessage(err))
     },
   })
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-12">
       {/* Top Welcome Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground">
             Welcome back, {user?.first_name || "Creator"} 👋
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground font-medium">
+          <p className="mt-1 text-sm font-medium text-muted-foreground">
             Your publishing & analytics command center.
           </p>
         </div>
         <Link
           to="/posts/new"
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-md shadow-primary/20 hover:bg-primary/95 transition-all duration-200"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-md shadow-primary/20 transition-all duration-200 hover:bg-primary/95"
         >
           <Plus className="size-4 stroke-[2.5]" />
           Create New Post
@@ -69,47 +138,47 @@ export function DashboardPage() {
         <MetricCard
           icon={FileText}
           label="Published Stories"
-          value={myPosts.length}
-          trend="+12% from last month"
+          value={publishedCount}
+          subtitle={`${draftCount} draft${draftCount === 1 ? "" : "s"}`}
           color="text-primary"
           bg="bg-primary/10"
         />
         <MetricCard
           icon={Bookmark}
           label="Saved Bookmarks"
-          value="24"
-          trend="+4 new this week"
+          value={bookmarksQuery.data?.length ?? 0}
+          subtitle="Saved stories"
           color="text-indigo-500"
           bg="bg-indigo-500/10"
         />
         <MetricCard
-          icon={Users}
-          label="Total Subscribers"
-          value="1,420"
-          trend="+18% growth"
-          color="text-emerald-500"
-          bg="bg-emerald-500/10"
+          icon={Heart}
+          label="Liked Stories"
+          value={likesQuery.data?.length ?? 0}
+          subtitle="Liked stories"
+          color="text-rose-500"
+          bg="bg-rose-500/10"
         />
         <MetricCard
-          icon={BarChart3}
-          label="Monthly Views"
-          value="18.5k"
-          trend="+32% engagement"
-          color="text-amber-500"
-          bg="bg-amber-500/10"
+          icon={Users}
+          label="Followers / Following"
+          value={`${followersQuery.data?.length ?? 0} / ${followingQuery.data?.length ?? 0}`}
+          subtitle="Community network"
+          color="text-emerald-500"
+          bg="bg-emerald-500/10"
         />
       </div>
 
       {/* Table Section */}
-      <Card className="rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-md">
-        <CardHeader className="flex flex-row items-center justify-between border-b border-slate-200/60 dark:border-slate-800/60 pb-4">
+      <Card className="rounded-2xl border border-slate-200/80 shadow-md dark:border-slate-800/80">
+        <CardHeader className="flex flex-row items-center justify-between border-b border-slate-200/60 pb-4 dark:border-slate-800/60">
           <div>
             <CardTitle className="text-xl font-bold">Your Stories</CardTitle>
             <CardDescription className="text-xs font-medium">
-              Manage, view, and organize all your articles.
+              Manage, view, and update status of your articles.
             </CardDescription>
           </div>
-          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
             {myPosts.length} Total
           </span>
         </CardHeader>
@@ -118,7 +187,7 @@ export function DashboardPage() {
           {myPosts.length ? (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="border-b border-slate-200/60 dark:border-slate-800/60 bg-slate-50/50 dark:bg-slate-900/50 text-xs uppercase font-bold text-slate-600 dark:text-slate-400">
+                <thead className="border-b border-slate-200/60 bg-slate-50/50 text-xs font-bold text-slate-600 uppercase dark:border-slate-800/60 dark:bg-slate-900/50 dark:text-slate-400">
                   <tr>
                     <th className="px-6 py-3.5">Title</th>
                     <th className="px-6 py-3.5">Category</th>
@@ -131,46 +200,69 @@ export function DashboardPage() {
                   {myPosts.map((post) => (
                     <tr
                       key={post.id}
-                      className="hover:bg-slate-50/80 dark:hover:bg-slate-900/40 transition-colors"
+                      className="transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-900/40"
                     >
                       <td className="px-6 py-4 font-semibold text-foreground">
                         <div className="max-w-md truncate">
                           <Link
                             to={`/posts/${post.slug}`}
-                            className="hover:text-primary transition-colors flex items-center gap-1.5 group"
+                            className="group flex items-center gap-1.5 transition-colors hover:text-primary"
                           >
                             <span>{post.title}</span>
-                            <ArrowUpRight className="size-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-primary" />
+                            <ArrowUpRight className="size-3.5 text-primary opacity-0 transition-opacity group-hover:opacity-100" />
                           </Link>
-                          <p className="text-xs text-muted-foreground font-normal mt-0.5">
+                          <p className="mt-0.5 text-xs font-normal text-muted-foreground">
                             {getReadingTime(post.content)}
                           </p>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                        <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
                           {post.category.name}
                         </span>
                       </td>
+
+                      {/* Status Dropdown Select */}
                       <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                            post.status === "PUBLISHED"
-                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                              : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                        <select
+                          disabled={updateStatusMutation.isPending}
+                          value={post.status}
+                          onChange={(e) => {
+                            const newStatus = e.target.value as PostStatus
+                            if (newStatus !== post.status) {
+                              updateStatusMutation.mutate({ post, newStatus })
+                            }
+                          }}
+                          className={`cursor-pointer rounded-xl border px-3 py-1.5 text-xs font-bold transition-all outline-none ${
+                            post.status === "Published"
+                              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                              : "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
                           }`}
                         >
-                          {post.status}
-                        </span>
+                          <option value="Published" className="bg-background text-foreground font-semibold">
+                            Published
+                          </option>
+                          <option value="Draft" className="bg-background text-foreground font-semibold">
+                            Draft
+                          </option>
+                        </select>
                       </td>
-                      <td className="px-6 py-4 text-xs font-medium text-muted-foreground whitespace-nowrap">
+
+                      <td className="px-6 py-4 text-xs font-medium whitespace-nowrap text-muted-foreground">
                         {format(new Date(post.created_at), "MMM d, yyyy")}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Link
+                            to={`/posts/${post.slug}/edit`}
+                            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-slate-200/60 hover:text-foreground dark:hover:bg-slate-800"
+                            title="Edit story"
+                          >
+                            <Pencil className="size-4" />
+                          </Link>
+                          <Link
                             to={`/posts/${post.slug}`}
-                            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors"
+                            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-slate-200/60 hover:text-foreground dark:hover:bg-slate-800"
                             title="View story"
                           >
                             <Eye className="size-4" />
@@ -178,11 +270,15 @@ export function DashboardPage() {
                           <button
                             type="button"
                             onClick={() => {
-                              if (window.confirm(`Are you sure you want to delete "${post.title}"?`)) {
+                              if (
+                                window.confirm(
+                                  `Are you sure you want to delete "${post.title}"?`
+                                )
+                              ) {
                                 deletePostMutation.mutate(post.id)
                               }
                             }}
-                            className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-500/10 transition-colors"
+                            className="cursor-pointer rounded-lg p-1.5 text-rose-500 transition-colors hover:bg-rose-500/10 hover:text-rose-700"
                             title="Delete story"
                           >
                             <Trash2 className="size-4" />
@@ -213,31 +309,41 @@ type MetricProps = {
   icon: LucideIcon
   label: string
   value: string | number
-  trend: string
+  subtitle: string
   color: string
   bg: string
 }
 
-function MetricCard({ icon: Icon, label, value, trend, color, bg }: MetricProps) {
+function MetricCard({
+  icon: Icon,
+  label,
+  value,
+  subtitle,
+  color,
+  bg,
+}: MetricProps) {
   return (
     <motion.div
       whileHover={{ y: -2 }}
-      className="rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-card p-5 shadow-sm space-y-3"
+      className="space-y-3 rounded-2xl border border-slate-200/80 bg-card p-5 shadow-sm dark:border-slate-800/80"
     >
       <div className="flex items-center justify-between">
-        <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+        <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
           {label}
         </span>
-        <div className={`grid size-9 place-items-center rounded-xl ${bg} ${color}`}>
+        <div
+          className={`grid size-9 place-items-center rounded-xl ${bg} ${color}`}
+        >
           <Icon className="size-4 stroke-[2.5]" aria-hidden />
         </div>
       </div>
       <div>
-        <p className="text-3xl font-extrabold tracking-tight text-foreground">{value}</p>
-        <div className="flex items-center gap-1 mt-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-          <TrendingUp className="size-3.5" />
-          <span>{trend}</span>
-        </div>
+        <p className="text-3xl font-extrabold tracking-tight text-foreground">
+          {value}
+        </p>
+        <p className="mt-1 text-xs font-semibold text-muted-foreground">
+          {subtitle}
+        </p>
       </div>
     </motion.div>
   )

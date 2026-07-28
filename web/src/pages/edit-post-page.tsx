@@ -1,11 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { Eye, FileText, Loader2, Send } from "lucide-react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { Eye, FileText, Loader2, Save } from "lucide-react"
 import * as React from "react"
 import { useForm, useWatch } from "react-hook-form"
-import { useNavigate } from "react-router"
+import { useNavigate, useParams } from "react-router"
 import { toast } from "sonner"
 
+import { ErrorState } from "@/components/common/error-state"
 import { FormImageUpload } from "@/components/forms/form-image-upload"
 import { FormInput } from "@/components/forms/form-input"
 import {
@@ -15,6 +16,7 @@ import {
 import { FormSelect } from "@/components/forms/form-select"
 import { FormTextarea } from "@/components/forms/form-textarea"
 import { TagMultiSelect } from "@/components/forms/tag-multi-select"
+import { PageLoader } from "@/components/loaders/page-loader"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -29,7 +31,8 @@ import { postService } from "@/services/post.service"
 import { getErrorMessage } from "@/utils/error"
 import { getReadingTime } from "@/utils/reading-time"
 
-export function NewPostPage() {
+export function EditPostPage() {
+  const { slug } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const categoriesQuery = useCategories()
@@ -39,6 +42,12 @@ export function NewPostPage() {
   const [coverImageFile, setCoverImageFile] = React.useState<File | null>(null)
   const [multiImages, setMultiImages] = React.useState<MultiImageItem[]>([])
   const [isPreviewMode, setIsPreviewMode] = React.useState(false)
+
+  const postQuery = useQuery({
+    queryKey: ["post", slug],
+    queryFn: () => postService.getPostBySlug(slug ?? ""),
+    enabled: Boolean(slug),
+  })
 
   const form = useForm<PostFormValues>({
     resolver: zodResolver(postSchema),
@@ -51,15 +60,37 @@ export function NewPostPage() {
     },
   })
 
-  const createPost = useMutation({
-    mutationFn: postService.createPost,
-    onSuccess: (post) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.posts })
-      toast.success("Post created successfully.")
-      navigate(`/posts/${post.slug}`)
+  // Populate form with existing post data once fetched
+  React.useEffect(() => {
+    if (postQuery.data) {
+      const p = postQuery.data
+      form.reset({
+        title: p.title || "",
+        excerpt: p.excerpt || "",
+        category_id: p.category_id || "",
+        status: p.status === "Draft" ? "Draft" : "Published",
+        content: p.content || "",
+      })
+
+      if (p.tags) {
+        setTagIds(p.tags.map((t) => t.id))
+      }
+    }
+  }, [postQuery.data, form])
+
+  const updatePost = useMutation({
+    mutationFn: async (formData: FormData) => {
+      if (!postQuery.data?.id) throw new Error("Post ID is missing")
+      return postService.updatePost(postQuery.data.id, formData)
     },
-    onError: (error) => {
-      toast.error(getErrorMessage(error))
+    onSuccess: (updatedPost) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.posts })
+      queryClient.invalidateQueries({ queryKey: ["post", updatedPost.slug] })
+      toast.success("Post updated successfully.")
+      navigate(`/posts/${updatedPost.slug}`)
+    },
+    onError: (err) => {
+      toast.error(getErrorMessage(err))
     },
   })
 
@@ -81,14 +112,14 @@ export function NewPostPage() {
       formData.append("tag_ids", tagId)
     })
 
-    // Append multiple gallery images & alt texts
+    // Append gallery images if added
     multiImages.forEach((item, index) => {
       formData.append("images", item.file)
       formData.append("image_alt_texts", item.altText || `Image ${index + 1}`)
       formData.append("image_positions", String(index + 1))
     })
 
-    createPost.mutate(formData)
+    updatePost.mutate(formData)
   }
 
   const categoryOptions =
@@ -112,6 +143,11 @@ export function NewPostPage() {
     categoriesQuery.data?.find((c) => c.id === watchCategoryId)?.name ||
     "Uncategorized"
 
+  if (postQuery.isLoading) return <PageLoader />
+  if (postQuery.isError || !postQuery.data) {
+    return <ErrorState message="Could not load the story for editing." />
+  }
+
   return (
     <div className="mx-auto w-full max-w-4xl space-y-8 pb-12">
       {/* Page Title & View Switcher */}
@@ -121,7 +157,7 @@ export function NewPostPage() {
             Story Editor
           </p>
           <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-foreground">
-            Write a new story
+            Edit Article
           </h1>
         </div>
 
@@ -176,41 +212,30 @@ export function NewPostPage() {
           <CardHeader>
             <CardTitle className="text-xl font-bold">Story Details</CardTitle>
             <CardDescription className="text-xs font-medium">
-              Fill out the publication details below and send your story live.
+              Update your article details, status, and media.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form
-              id="new-post-form"
+              id="edit-post-form"
               onSubmit={form.handleSubmit(onSubmit)}
               className="space-y-6"
             >
               <FormInput
                 control={form.control}
                 name="title"
-                label="Story Title"
-                placeholder="Enter a compelling title..."
-                maxLength={160}
-                disabled={createPost.isPending}
+                label="Article Title"
+                placeholder="Give your story a compelling title..."
               />
 
-              <FormTextarea
-                control={form.control}
-                name="excerpt"
-                label="Short Excerpt"
-                placeholder="A brief preview summary for readers..."
-                rows={3}
-                disabled={createPost.isPending}
-              />
-
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <FormSelect
                   control={form.control}
                   name="category_id"
                   label="Category"
+                  placeholder="Select a category"
                   options={categoryOptions}
-                  placeholder="Select category"
-                  disabled={createPost.isPending || categoriesQuery.isLoading}
+                  disabled={categoriesQuery.isLoading}
                 />
 
                 <FormSelect
@@ -218,13 +243,20 @@ export function NewPostPage() {
                   name="status"
                   label="Publish Status"
                   options={statusOptions}
-                  disabled={createPost.isPending}
                 />
               </div>
 
+              <FormInput
+                control={form.control}
+                name="excerpt"
+                label="Excerpt / Summary"
+                placeholder="Brief summary for social sharing & previews..."
+              />
+
               <FormImageUpload
                 label="Cover Image"
-                description="Upload an image to display at the top of your story."
+                description="Upload a new cover image to replace the current one."
+                previewUrl={postQuery.data.cover_image}
                 onFileSelect={(file) => setCoverImageFile(file)}
               />
 
@@ -241,35 +273,42 @@ export function NewPostPage() {
                 selectedTagIds={tagIds}
                 onChange={setTagIds}
                 placeholder="Select story tags from dropdown..."
-                disabled={createPost.isPending || tagsQuery.isLoading}
+                disabled={updatePost.isPending || tagsQuery.isLoading}
               />
 
               <FormTextarea
                 control={form.control}
                 name="content"
-                label="Content"
-                placeholder="Write your story content here..."
-                rows={14}
-                disabled={createPost.isPending}
+                label="Story Content"
+                placeholder="Write your article content here..."
+                rows={12}
               />
 
-              <div className="flex items-center justify-end gap-3 pt-2">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate("/dashboard")}
+                  className="rounded-xl font-bold"
+                >
+                  Cancel
+                </Button>
                 <Button
                   type="submit"
-                  form="new-post-form"
+                  form="edit-post-form"
                   size="lg"
-                  disabled={createPost.isPending}
+                  disabled={updatePost.isPending}
                   className="gap-2 rounded-xl font-bold shadow-md"
                 >
-                  {createPost.isPending ? (
+                  {updatePost.isPending ? (
                     <>
-                      <Loader2 className="size-4 animate-spin stroke-[2.5]" />
-                      Publishing...
+                      <Loader2 className="size-4 animate-spin" />
+                      Saving...
                     </>
                   ) : (
                     <>
-                      <Send className="size-4 stroke-[2.5]" />
-                      Publish Story
+                      <Save className="size-4" />
+                      Save Changes
                     </>
                   )}
                 </Button>
