@@ -527,7 +527,7 @@ export function AdminDashboardPage() {
                         >
                           <td className="p-4">
                             <div className="flex items-center gap-3">
-                              {u.avatar ? (
+                              {u.avatar && u.avatar !== "string" ? (
                                 <img
                                   src={u.avatar}
                                   alt=""
