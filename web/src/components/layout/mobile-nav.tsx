@@ -47,36 +47,38 @@ export function MobileNav() {
       {/* Slide-Up Drawer for Missing Nav Links */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 animate-in bg-black/60 backdrop-blur-md duration-200 fade-in md:hidden"
-          onClick={() => setIsOpen(false)}
+          className="fixed inset-x-0 bottom-0 z-50 flex h-[50vh] animate-in flex-col rounded-t-3xl border-t border-slate-200 bg-background/85 shadow-2xl backdrop-blur-2xl duration-300 slide-in-from-bottom dark:border-slate-800 dark:bg-slate-950/85"
+          style={{
+            WebkitBackdropFilter: "blur(20px) saturate(180%)",
+            backdropFilter: "blur(20px) saturate(180%)",
+            paddingBottom: "env(safe-area-inset-bottom)",
+          }}
+          onClick={(e) => e.stopPropagation()}
         >
-          <div
-            className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] animate-in space-y-5 overflow-y-auto rounded-t-3xl border-t border-slate-200 bg-background/85 p-6 shadow-2xl backdrop-blur-2xl duration-300 slide-in-from-bottom dark:border-slate-800 dark:bg-slate-950/85"
-            style={{
-              WebkitBackdropFilter: "blur(20px) saturate(180%)",
-              backdropFilter: "blur(20px) saturate(180%)",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b border-slate-200 pb-3 dark:border-slate-800">
-              <div className="flex items-center gap-2">
-                <Grid className="size-5 text-primary" />
-                <h3 className="text-base font-extrabold text-foreground">
-                  Menu Navigation
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="grid size-8 place-items-center rounded-full bg-slate-100 text-muted-foreground transition-colors hover:text-foreground dark:bg-slate-800"
-              >
-                <X className="size-4" />
-              </button>
+          {/* Header */}
+          <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-800">
+            <div className="flex items-center gap-2">
+              <Grid className="size-5 text-primary" />
+              <h3 className="text-base font-extrabold text-foreground">
+                Menu Navigation
+              </h3>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="grid size-9 place-items-center rounded-full bg-slate-100 text-muted-foreground transition hover:text-foreground dark:bg-slate-800"
+            >
+              <X className="size-4" />
+            </button>
+          </div>
+
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto px-6 pt-5 pb-16">
+            <div className="grid grid-cols-2 gap-2 pb-6">
               {moreNavLinks.map((item) => {
                 const Icon = item.icon
+
                 return (
                   <NavLink
                     key={item.href}
@@ -94,6 +96,7 @@ export function MobileNav() {
                     <div className="grid size-8 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
                       <Icon className="size-4" />
                     </div>
+
                     <span>{item.label}</span>
                   </NavLink>
                 )
