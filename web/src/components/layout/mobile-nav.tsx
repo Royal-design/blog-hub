@@ -1,22 +1,22 @@
-import * as React from "react"
 import {
   Bookmark,
   Compass,
   FileText,
-  Home,
   Grid,
+  Home,
   Plus,
-  User,
-  Users,
-  UserCheck,
   Search,
   ShieldCheck,
+  User,
+  UserCheck,
+  Users,
   X,
 } from "lucide-react"
+import * as React from "react"
 import { NavLink } from "react-router"
 
-import { useAuthStore } from "@/store/auth.store"
 import { cn } from "@/lib/utils"
+import { useAuthStore } from "@/store/auth.store"
 
 export function MobileNav() {
   const user = useAuthStore((state) => state.user)
@@ -47,22 +47,28 @@ export function MobileNav() {
       {/* Slide-Up Drawer for Missing Nav Links */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md md:hidden animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 animate-in bg-black/60 backdrop-blur-md duration-200 fade-in md:hidden"
           onClick={() => setIsOpen(false)}
         >
           <div
-            className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-3xl border-t border-slate-200 dark:border-slate-800 bg-background/90 dark:bg-slate-950/90 backdrop-blur-2xl p-6 shadow-2xl animate-in slide-in-from-bottom duration-300 space-y-5"
+            className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] animate-in space-y-5 overflow-y-auto rounded-t-3xl border-t border-slate-200 bg-background/85 p-6 shadow-2xl backdrop-blur-2xl duration-300 slide-in-from-bottom dark:border-slate-800 dark:bg-slate-950/85"
+            style={{
+              WebkitBackdropFilter: "blur(20px) saturate(180%)",
+              backdropFilter: "blur(20px) saturate(180%)",
+            }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3 dark:border-slate-800">
               <div className="flex items-center gap-2">
                 <Grid className="size-5 text-primary" />
-                <h3 className="font-extrabold text-base text-foreground">Menu Navigation</h3>
+                <h3 className="text-base font-extrabold text-foreground">
+                  Menu Navigation
+                </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="grid size-8 place-items-center rounded-full bg-slate-100 dark:bg-slate-800 text-muted-foreground hover:text-foreground transition-colors"
+                className="grid size-8 place-items-center rounded-full bg-slate-100 text-muted-foreground transition-colors hover:text-foreground dark:bg-slate-800"
               >
                 <X className="size-4" />
               </button>
@@ -78,10 +84,10 @@ export function MobileNav() {
                     onClick={() => setIsOpen(false)}
                     className={({ isActive }) =>
                       cn(
-                        "flex items-center gap-3 p-3 rounded-2xl border text-xs font-bold transition-all",
+                        "flex items-center gap-3 rounded-2xl border p-3 text-xs font-bold transition-all",
                         isActive
-                          ? "bg-primary/10 border-primary/30 text-primary"
-                          : "bg-slate-50/80 dark:bg-slate-900/60 border-slate-200/80 dark:border-slate-800/80 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+                          ? "border-primary/30 bg-primary/10 text-primary"
+                          : "border-slate-200/80 bg-slate-50/80 text-slate-700 hover:bg-slate-100 dark:border-slate-800/80 dark:bg-slate-900/60 dark:text-slate-300 dark:hover:bg-slate-800"
                       )
                     }
                   >
@@ -99,33 +105,34 @@ export function MobileNav() {
 
       {/* Floating Bottom Nav Bar */}
       <nav
-        className="fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-background/70 dark:bg-slate-950/75 px-2 py-1.5 shadow-2xl shadow-black/20 backdrop-blur-xl backdrop-saturate-150 md:hidden"
+        className="fixed inset-x-3 bottom-1 z-50 rounded-2xl border border-slate-200/80 bg-white/70 px-2 py-2.5 shadow-2xl shadow-black/20 backdrop-blur-xl backdrop-saturate-150 md:hidden dark:border-slate-800/80 dark:bg-slate-950/75"
+        style={{
+          WebkitBackdropFilter: "blur(16px) saturate(180%)",
+          backdropFilter: "blur(16px) saturate(180%)",
+        }}
         aria-label="Mobile navigation"
       >
-        <div className={cn("grid items-center gap-1", isAdmin ? "grid-cols-6" : "grid-cols-5")}>
+        <div className="grid grid-cols-5 items-center gap-1">
           <MobileNavItem label="Home" href="/" icon={Home} />
           <MobileNavItem label="Explore" href="/explore" icon={Compass} />
 
           <NavLink
             to="/posts/new"
             aria-label="Create post"
-            className="mx-auto grid size-11 -translate-y-3 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition hover:scale-105"
+            className="mx-auto grid size-11 -translate-y-6 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 transition hover:scale-105"
           >
             <Plus className="size-5" aria-hidden />
           </NavLink>
 
           <MobileNavItem label="Bookmarks" href="/bookmarks" icon={Bookmark} />
 
-          {isAdmin && (
-            <MobileNavItem label="Admin" href="/admin" icon={ShieldCheck} />
-          )}
-
           <button
             type="button"
             onClick={() => setIsOpen(true)}
             className={cn(
-              "grid h-11 place-items-center rounded-xl text-muted-foreground transition cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/60",
-              isOpen && "bg-primary/10 text-primary shadow-[0_0_24px_rgba(79,70,229,0.25)]"
+              "grid h-11 cursor-pointer place-items-center rounded-xl text-muted-foreground transition hover:bg-slate-100 dark:hover:bg-slate-800/60",
+              isOpen &&
+                "bg-primary/10 text-primary shadow-[0_0_24px_rgba(79,70,229,0.25)]"
             )}
             aria-label="All Navigation"
           >
@@ -150,7 +157,8 @@ function MobileNavItem({ label, href, icon: Icon }: MobileNavItemProps) {
       className={({ isActive }) =>
         cn(
           "grid h-11 place-items-center rounded-xl text-muted-foreground transition hover:bg-slate-100 dark:hover:bg-slate-800/60",
-          isActive && "bg-primary/10 text-primary shadow-[0_0_24px_rgba(79,70,229,0.25)]"
+          isActive &&
+            "bg-primary/10 text-primary shadow-[0_0_24px_rgba(79,70,229,0.25)]"
         )
       }
       aria-label={label}
@@ -160,5 +168,3 @@ function MobileNavItem({ label, href, icon: Icon }: MobileNavItemProps) {
     </NavLink>
   )
 }
-
-

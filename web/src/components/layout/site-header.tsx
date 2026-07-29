@@ -37,7 +37,13 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200/80 dark:border-slate-800/80 bg-background/85 backdrop-blur-xl transition-colors">
+    <header
+      className="sticky top-0 z-40 border-b border-slate-200/80 dark:border-slate-800/80 bg-white/75 dark:bg-slate-950/75 backdrop-blur-xl backdrop-saturate-150 transition-colors"
+      style={{
+        WebkitBackdropFilter: "blur(16px) saturate(180%)",
+        backdropFilter: "blur(16px) saturate(180%)",
+      }}
+    >
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         {/* Brand Logo */}
         <Link to="/" className="flex items-center gap-2.5 font-bold text-foreground hover:opacity-90 transition-opacity">
