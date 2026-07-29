@@ -121,7 +121,7 @@ function CrudList({
           size="sm"
           onClick={handleAdd}
           disabled={isAdding || !newName.trim()}
-          className="gap-1.5 rounded-xl font-bold text-black"
+          className="gap-1.5 rounded-xl font-bold"
         >
           <Plus className="size-3.5" />
           {isAdding ? "Adding…" : "Add"}
