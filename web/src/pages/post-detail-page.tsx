@@ -161,7 +161,7 @@ export function PostDetailPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <LikeButton postId={post.id} size="default" />
+            <LikeButton postId={post.id} initialCount={post.like_count} size="default" />
             <BookmarkButton postId={post.id} size="default" />
             <Button
               type="button"
@@ -196,7 +196,7 @@ export function PostDetailPage() {
       {/* Interactive Bottom Actions Bar */}
       <div className="flex items-center justify-between p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80">
         <div className="flex items-center gap-4">
-          <LikeButton postId={post.id} size="default" />
+          <LikeButton postId={post.id} initialCount={post.like_count} size="default" />
           <BookmarkButton postId={post.id} size="default" />
         </div>
         <Button
