@@ -33,7 +33,7 @@ A modern, responsive full-stack blogging platform built for seamless content cre
 
 - **Frontend:** React 19, TypeScript, Vite, TailwindCSS v4, Lucide Icons, React Router v7
 - **State Management & Data Fetching:** Zustand, TanStack React Query v5
-- **Backend:** Node.js, Express, PostgreSQL / Supabase
+- **Backend:** Node.js, Express, PostgreSQL
 - **Deployment:** Vercel
 
 ---
