@@ -1,6 +1,5 @@
 import * as React from "react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { formatDistanceToNow } from "date-fns"
 import { AnimatePresence, motion } from "framer-motion"
 import { CornerDownRight, Edit2, Reply, Send, Trash2 } from "lucide-react"
 
@@ -8,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { commentService } from "@/services/comment.service"
 import { useAuthStore } from "@/store/auth.store"
 import type { Comment } from "@/types/comment"
+import { formatDateAgo } from "@/utils/date"
 import { getInitials } from "@/utils/initials"
 
 export interface CommentItemProps {
@@ -117,7 +117,7 @@ export function CommentItem({ comment, postId, allComments }: CommentItemProps) 
             <div>
               <h4 className="text-xs font-extrabold text-foreground">{authorName}</h4>
               <p className="text-[10px] text-muted-foreground">
-                {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                {formatDateAgo(comment.created_at)}
               </p>
             </div>
           </div>
