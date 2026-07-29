@@ -1,5 +1,5 @@
-export type UserRole = "USER" | "ADMIN"
-export type AuthProvider = "CREDENTIALS" | "GOOGLE"
+export type UserRole = "user" | "admin"
+export type AuthProvider = "credentials" | "google"
 
 export type User = {
   id: string

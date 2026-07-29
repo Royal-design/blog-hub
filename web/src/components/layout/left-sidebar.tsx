@@ -5,6 +5,7 @@ import {
   FileText,
   FolderOpen,
   Home,
+  ShieldCheck,
   Tag as TagIcon,
   Users,
 } from "lucide-react"
@@ -44,6 +45,9 @@ export function LeftSidebar() {
     { label: "Following Feed", href: "/following", icon: Users },
     { label: "Bookmarked Posts", href: "/bookmarks", icon: Bookmark },
     { label: "My Stories", href: "/dashboard", icon: FileText, badge: myPosts.length },
+    ...(user?.role === "admin"
+      ? [{ label: "Admin Panel", href: "/admin", icon: ShieldCheck, badgeLabel: "ADMIN" }]
+      : []),
   ]
 
   const userInitials = getInitials(
@@ -120,6 +124,11 @@ export function LeftSidebar() {
                 <Icon className="size-4 shrink-0" />
                 <span>{item.label}</span>
               </div>
+              {"badgeLabel" in item && item.badgeLabel && (
+                <span className="rounded-md bg-violet-600 px-2 py-0.5 text-[9px] font-black tracking-wider text-white shadow-sm">
+                  {item.badgeLabel}
+                </span>
+              )}
               {item.badge !== undefined && item.badge > 0 && (
                 <span className="rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-extrabold text-primary">
                   {item.badge}

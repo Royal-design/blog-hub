@@ -61,8 +61,10 @@ export function EditPostPage() {
   })
 
   // Populate form with existing post data once fetched
+  const [hasInitializedTags, setHasInitializedTags] = React.useState(false)
+
   React.useEffect(() => {
-    if (postQuery.data) {
+    if (postQuery.data && !hasInitializedTags) {
       const p = postQuery.data
       form.reset({
         title: p.title || "",
@@ -75,8 +77,9 @@ export function EditPostPage() {
       if (p.tags) {
         setTagIds(p.tags.map((t) => t.id))
       }
+      setHasInitializedTags(true)
     }
-  }, [postQuery.data, form])
+  }, [postQuery.data, form, hasInitializedTags])
 
   const updatePost = useMutation({
     mutationFn: async (formData: FormData) => {

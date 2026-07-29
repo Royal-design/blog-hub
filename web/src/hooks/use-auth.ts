@@ -48,6 +48,10 @@ export function useLogout() {
   return useMutation({
     mutationFn: () => authService.logout(refreshToken),
     onSettled: () => {
+      // Navigate to home BEFORE clearing auth so ProtectedRoute
+      // doesn't record the current protected page as the "from" location.
+      // This prevents the post-login redirect from going back to a protected page.
+      window.location.replace("/")
       clearAuth()
       queryClient.clear()
       toast.success("Signed out.")

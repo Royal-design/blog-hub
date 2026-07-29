@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, status
 from uuid import UUID
 
-from app.api.dependencies.auth import get_current_user
+from app.api.dependencies.auth import get_current_admin_user, get_current_user
 from app.api.dependencies.services import get_category_service
 from app.schemas.category import CategoryCreate, CategoryResponse, CategoryUpdate
 from app.schemas.response import SuccessResponse
@@ -18,11 +18,15 @@ def get_categories(category_service: CategoryService = Depends(get_category_serv
         data=categories,
     )
 
-@router.post("/", response_model=SuccessResponse[CategoryResponse],status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=SuccessResponse[CategoryResponse],
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(get_current_admin_user)],
+)
 def create_category(
     request: CategoryCreate,
     category_service: CategoryService = Depends(get_category_service),
-    
 ):
     category = category_service.create_category(request)
 
@@ -38,12 +42,16 @@ def get_category(category_id: UUID, category_service: CategoryService = Depends(
     return category
 
 @router.get("/slug/{slug}", response_model=CategoryResponse)
-def get_category(slug_name: str, category_service: CategoryService = Depends(get_category_service)):
+def get_category_by_slug(slug_name: str, category_service: CategoryService = Depends(get_category_service)):
     category = category_service.get_category_by_slug(slug_name)
     return category
 
 
-@router.put("/{category_id}", response_model=SuccessResponse[CategoryResponse])
+@router.put(
+    "/{category_id}",
+    response_model=SuccessResponse[CategoryResponse],
+    dependencies=[Depends(get_current_admin_user)],
+)
 def update_category(
     category_id: UUID,
     request: CategoryUpdate,
@@ -56,7 +64,11 @@ def update_category(
         data=category,
     )
 
-@router.delete("/{category_id}", response_model=SuccessResponse[CategoryResponse])
+@router.delete(
+    "/{category_id}",
+    response_model=SuccessResponse[CategoryResponse],
+    dependencies=[Depends(get_current_admin_user)],
+)
 def delete_category(
     category_id: UUID,
     category_service: CategoryService = Depends(get_category_service),
@@ -67,4 +79,3 @@ def delete_category(
         message="Category deleted successfully",
         data=category,
     )
-

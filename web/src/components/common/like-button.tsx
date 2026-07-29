@@ -38,17 +38,13 @@ export function LikeButton({
     myLikesQuery.data?.some((item) => item.post_id === postId)
   )
 
-  const [isLiked, setIsLiked] = React.useState(isLikedServer)
-  const [likeCount, setLikeCount] = React.useState(initialCount)
+  const [optimisticState, setOptimisticState] = React.useState<{
+    isLiked: boolean
+    likeCount: number
+  } | null>(null)
 
-  React.useEffect(() => {
-    setIsLiked(isLikedServer)
-  }, [isLikedServer])
-
-  // Sync count when the prop updates (e.g. after data loads)
-  React.useEffect(() => {
-    setLikeCount(initialCount)
-  }, [initialCount])
+  const isLiked = optimisticState?.isLiked ?? isLikedServer
+  const likeCount = optimisticState?.likeCount ?? initialCount
 
   const toggleMutation = useMutation({
     mutationFn: async (currentlyLiked: boolean) => {
@@ -59,19 +55,23 @@ export function LikeButton({
       }
     },
     onMutate: async (currentlyLiked: boolean) => {
-      const nextLiked = !currentlyLiked
-      setIsLiked(nextLiked)
-      setLikeCount((prev) => (nextLiked ? prev + 1 : Math.max(0, prev - 1)))
-      return { previousLiked: currentlyLiked }
+      const nextState = !currentlyLiked
+      const nextCount = nextState ? likeCount + 1 : Math.max(0, likeCount - 1)
+      setOptimisticState({ isLiked: nextState, likeCount: nextCount })
+      return { previousLiked: currentlyLiked, previousCount: likeCount }
     },
     onError: (_err, _currentlyLiked, context) => {
       if (context) {
-        setIsLiked(context.previousLiked)
-        setLikeCount((prev) => (context.previousLiked ? prev + 1 : Math.max(0, prev - 1)))
+        setOptimisticState({
+          isLiked: context.previousLiked,
+          likeCount: context.previousCount,
+        })
       }
     },
     onSettled: () => {
+      setOptimisticState(null)
       queryClient.invalidateQueries({ queryKey: ["likes", "me"] })
+      queryClient.invalidateQueries({ queryKey: ["posts", postId] })
     },
   })
 

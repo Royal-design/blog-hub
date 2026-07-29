@@ -141,6 +141,19 @@ class UserService:
             setattr(db_user, key, value)
 
         return self.repository.update_user(db_user)
+
+    # -------------------------
+    # UPDATE USER ROLE (ADMIN ONLY)
+    # -------------------------
+    def update_user_role(
+        self,
+        user_id: UUID,
+        role: str,
+    ) -> User:
+        db_user = self.get_user_by_id(user_id)
+        db_user.role = role
+        return self.repository.update_user(db_user)
+
     
     # -------------------------
     # UPDATE USER PROFILE

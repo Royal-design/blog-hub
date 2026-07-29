@@ -1,6 +1,6 @@
 import { api } from "@/api/axios"
 import type { ApiSuccess } from "@/types/api"
-import type { User } from "@/types/auth"
+import type { User, UserRole } from "@/types/auth"
 
 export const userService = {
   async getUsers(params?: { search?: string; page?: number; page_size?: number }) {
@@ -14,4 +14,15 @@ export const userService = {
     const users = response.data.data
     return users.find((u) => u.id === userId) ?? null
   },
+
+  async updateUserRole(userId: string, role: UserRole) {
+    const response = await api.patch<ApiSuccess<User>>(`/users/users/${userId}/role`, { role })
+    return response.data.data
+  },
+
+  async deleteUser(userId: string) {
+    const response = await api.delete<ApiSuccess<User>>(`/users/users/${userId}`)
+    return response.data.data
+  },
 }
+

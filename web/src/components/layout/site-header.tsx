@@ -98,7 +98,6 @@ export function SiteHeader() {
                 <Plus className="size-4 stroke-[2.5]" />
                 Write
               </Link>
-
               <Link
                 to="/profile"
                 className="flex items-center gap-2 p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"

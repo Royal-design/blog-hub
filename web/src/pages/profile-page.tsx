@@ -23,7 +23,9 @@ import { PageLoader } from "@/components/loaders/page-loader"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useLogout } from "@/hooks/use-auth"
 import { profileService } from "@/services/profile.service"
+import { userService } from "@/services/user.service"
 import { getErrorMessage } from "@/utils/error"
 import { getInitials } from "@/utils/initials"
 
@@ -354,6 +356,109 @@ export function ProfilePage() {
           </form>
         </CardContent>
       </Card>
+
+      {/* Danger Zone: Account Deletion */}
+      <Card className="rounded-3xl border border-destructive/20 bg-destructive/5 p-6 sm:p-8 shadow-sm">
+        <CardHeader className="p-0 pb-4">
+          <CardTitle className="text-lg font-black text-destructive flex items-center gap-2">
+            Danger Zone
+          </CardTitle>
+          <CardDescription className="text-xs text-muted-foreground">
+            Permanently delete your user account and all associated posts, comments, and data.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0 pt-2 flex items-center justify-between">
+          <div>
+            <p className="text-sm font-bold text-foreground">Delete Account</p>
+            <p className="text-xs text-muted-foreground">Once deleted, your account cannot be recovered.</p>
+          </div>
+          <DeleteAccountButton userId={profileQuery.data?.id ?? ""} />
+        </CardContent>
+      </Card>
     </div>
+  )
+}
+
+function DeleteAccountButton({ userId }: { userId: string }) {
+  const [isOpen, setIsOpen] = React.useState(false)
+  const [confirmText, setConfirmText] = React.useState("")
+  const logoutMutation = useLogout()
+
+  const deleteMutation = useMutation({
+    mutationFn: () => userService.deleteUser(userId),
+    onSuccess: () => {
+      toast.success("Your account has been deleted successfully.")
+      logoutMutation.mutate()
+    },
+    onError: (err) => {
+      toast.error(getErrorMessage(err))
+    },
+  })
+
+  return (
+    <>
+      <Button
+        type="button"
+        variant="destructive"
+        className="rounded-xl font-bold px-4 text-xs"
+        onClick={() => setIsOpen(true)}
+      >
+        Delete Account
+      </Button>
+
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="w-full max-w-md rounded-3xl bg-background border border-slate-200 dark:border-slate-800 p-6 shadow-2xl space-y-5 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-black text-destructive">Delete Account Confirmation</h3>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="text-muted-foreground hover:text-foreground rounded-lg p-1"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              This action <strong className="text-destructive font-black">CANNOT be undone</strong>. All your stories, comments, likes, and settings will be permanently erased.
+            </p>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-foreground">
+                Type <span className="font-mono text-destructive">delete my account</span> to confirm:
+              </label>
+              <input
+                type="text"
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder="delete my account"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-background px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-destructive"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setIsOpen(false)}
+                className="rounded-xl text-xs font-bold"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={confirmText.trim().toLowerCase() !== "delete my account" || deleteMutation.isPending}
+                onClick={() => deleteMutation.mutate()}
+                className="rounded-xl text-xs font-bold gap-2"
+              >
+                {deleteMutation.isPending && <Loader2 className="size-3.5 animate-spin" />}
+                Confirm Delete Account
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }

@@ -5,6 +5,11 @@ import { AppShell } from "@/components/layout/app-shell"
 import { PageLoader } from "@/components/loaders/page-loader"
 import { ProtectedRoute } from "@/routes/protected-route"
 
+const AdminDashboardPage = lazy(() =>
+  import("@/pages/admin-dashboard-page").then((module) => ({
+    default: module.AdminDashboardPage,
+  }))
+)
 const BookmarksPage = lazy(() =>
   import("@/pages/bookmarks-page").then((module) => ({
     default: module.BookmarksPage,
@@ -134,6 +139,14 @@ export function AppRoutes() {
             element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="admin"
+            element={
+              <ProtectedRoute>
+                <AdminDashboardPage />
               </ProtectedRoute>
             }
           />

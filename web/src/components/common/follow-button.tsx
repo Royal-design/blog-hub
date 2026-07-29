@@ -22,11 +22,7 @@ export function FollowButton({
   const queryClient = useQueryClient()
   const currentUser = useAuthStore((state) => state.user)
   const [isHovered, setIsHovered] = React.useState(false)
-
-  // Don't render follow button if viewing own profile
-  if (currentUser?.id === userId) {
-    return null
-  }
+  const [optimisticState, setOptimisticState] = React.useState<boolean | null>(null)
 
   const followingQuery = useQuery({
     queryKey: ["following", currentUser?.id],
@@ -39,11 +35,7 @@ export function FollowButton({
     followingQuery.data?.some((item: FollowingResponse) => item.following_id === userId)
   )
 
-  const [isFollowing, setIsFollowing] = React.useState(isFollowingServer)
-
-  React.useEffect(() => {
-    setIsFollowing(isFollowingServer)
-  }, [isFollowingServer])
+  const isFollowing = optimisticState ?? isFollowingServer
 
   const toggleMutation = useMutation({
     mutationFn: async (currentlyFollowing: boolean) => {
@@ -54,20 +46,25 @@ export function FollowButton({
       }
     },
     onMutate: async (currentlyFollowing: boolean) => {
-      const nextState = !currentlyFollowing
-      setIsFollowing(nextState)
+      setOptimisticState(!currentlyFollowing)
       return { previousState: currentlyFollowing }
     },
     onError: (_err, _currentlyFollowing, context) => {
       if (context) {
-        setIsFollowing(context.previousState)
+        setOptimisticState(context.previousState)
       }
     },
     onSettled: () => {
+      setOptimisticState(null)
       queryClient.invalidateQueries({ queryKey: ["following", currentUser?.id] })
       queryClient.invalidateQueries({ queryKey: ["followers", userId] })
     },
   })
+
+  // Don't render follow button if viewing own profile
+  if (currentUser?.id === userId) {
+    return null
+  }
 
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation()

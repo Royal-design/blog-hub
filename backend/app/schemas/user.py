@@ -30,6 +30,11 @@ class UserUpdateRequest(BaseModel):
     bio: str | None = None
     avatar: str | None = None
     avatar_public_id: str | None = None
+
+
+class UserRoleUpdateRequest(BaseModel):
+    role: UserRole
+
     
 class UserResponse(UserBase):
     id: UUID
