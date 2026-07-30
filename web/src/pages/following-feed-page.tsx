@@ -42,7 +42,7 @@ export function FollowingFeedPage() {
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-[260px_1fr] xl:grid-cols-[260px_1fr_300px] pb-12">
       {/* Left Sidebar */}
-      <div className="hidden lg:block">
+      <div className="hidden lg:block sticky top-20 h-fit">
         <LeftSidebar />
       </div>
 
@@ -106,7 +106,7 @@ export function FollowingFeedPage() {
       </main>
 
       {/* Right Sidebar */}
-      <div className="hidden xl:block">
+      <div className="hidden xl:block sticky top-20 h-fit">
         <RightSidebar />
       </div>
     </div>
