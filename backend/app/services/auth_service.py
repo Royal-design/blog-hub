@@ -1,8 +1,9 @@
 from datetime import datetime, timezone
 
 from fastapi import BackgroundTasks
-from google.auth import jwt as google_jwt
 from uuid import UUID, uuid4
+
+import requests
 
 from app.core.config import settings
 from app.core.exceptions import AppException
@@ -113,46 +114,52 @@ class AuthService:
     # GOOGLE LOGIN
     # -------------------------
     def google_login(self, request: GoogleAuthRequest):
-        try:
-            id_info = google_jwt.decode(
-                request.id_token,
-                verify=False,
-            )
+        token_resp = requests.get(
+            f"https://www.googleapis.com/oauth2/v3/tokeninfo?access_token={request.access_token}",
+            timeout=10,
+        )
 
-            if request.client_id:
-                if id_info.get("aud") != request.client_id:
-                    raise AppException(
-                        message="Invalid Google token audience",
-                        status_code=401,
-                        error_code="INVALID_GOOGLE_TOKEN",
-                    )
-            else:
-                if id_info.get("aud") != settings.google_client_id:
-                    raise AppException(
-                        message="Invalid Google token audience",
-                        status_code=401,
-                        error_code="INVALID_GOOGLE_TOKEN",
-                    )
-
-            email = id_info.get("email")
-            if not email:
-                raise AppException(
-                    message="Google account has no email",
-                    status_code=400,
-                    error_code="GOOGLE_NO_EMAIL",
-                )
-
-            google_id = id_info.get("sub")
-            first_name = id_info.get("given_name", "")
-            last_name = id_info.get("family_name", "")
-            avatar = id_info.get("picture")
-
-        except ValueError as e:
+        if token_resp.status_code != 200:
             raise AppException(
                 message="Invalid Google token",
                 status_code=401,
                 error_code="INVALID_GOOGLE_TOKEN",
             )
+
+        token_data = token_resp.json()
+        if token_data.get("aud") != settings.google_client_id:
+            raise AppException(
+                message="Invalid Google token audience",
+                status_code=401,
+                error_code="INVALID_GOOGLE_TOKEN",
+            )
+
+        profile_resp = requests.get(
+            "https://www.googleapis.com/oauth2/v3/userinfo",
+            headers={"Authorization": f"Bearer {request.access_token}"},
+            timeout=10,
+        )
+
+        if profile_resp.status_code != 200:
+            raise AppException(
+                message="Invalid Google token",
+                status_code=401,
+                error_code="INVALID_GOOGLE_TOKEN",
+            )
+
+        data = profile_resp.json()
+
+        email = data.get("email")
+        if not email:
+            raise AppException(
+                message="Google account has no email",
+                status_code=400,
+                error_code="GOOGLE_NO_EMAIL",
+            )
+
+        first_name = data.get("given_name", "")
+        last_name = data.get("family_name", "")
+        avatar = data.get("picture")
 
         user = self.user_service.get_user_by_email(email)
 

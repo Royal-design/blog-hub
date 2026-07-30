@@ -4,8 +4,7 @@ from app.schemas.user import UserResponse
 
 
 class GoogleAuthRequest(BaseModel):
-    id_token: str
-    client_id: str | None = None
+    access_token: str
 
 
 class ForgotPasswordRequest(BaseModel):

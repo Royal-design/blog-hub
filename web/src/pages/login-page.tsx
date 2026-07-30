@@ -26,14 +26,11 @@ export function LoginPage() {
 
   const googleAuth = useGoogleLogin({
     flow: "implicit",
+    scope: "openid email profile",
     onSuccess: (response) => {
-      const idToken = (response as { id_token?: string }).id_token
-      if (idToken) {
-        googleLogin.mutate({
-          id_token: idToken,
-          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-        })
-      }
+      googleLogin.mutate({
+        access_token: response.access_token,
+      })
     },
     onError: () => toast.error("Google sign-in failed"),
   })

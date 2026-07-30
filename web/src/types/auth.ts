@@ -38,6 +38,5 @@ export type RegisterPayload = {
 }
 
 export type GoogleAuthPayload = {
-  id_token: string
-  client_id?: string
+  access_token: string
 }
