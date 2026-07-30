@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
 
 from fastapi import BackgroundTasks
-from uuid import UUID
+from google.auth import jwt as google_jwt
+from uuid import UUID, uuid4
 
 from app.core.config import settings
 from app.core.exceptions import AppException
@@ -16,9 +17,12 @@ from app.core.security import (
     revoke_token,
     verify_password,
 )
+from app.models.enums import AuthProvider
+from app.models.user import User
 from app.schemas.auth import (
     ChangePasswordRequest,
     ForgotPasswordRequest,
+    GoogleAuthRequest,
     ResetPasswordRequest,
 )
 from app.schemas.response import MessageResponse
@@ -96,6 +100,87 @@ class AuthService:
                 status_code=401,
                 error_code="INVALID_CREDENTIALS",
             )
+
+        tokens = self._create_auth_tokens(user)
+
+        return {
+            "user": user,
+            **tokens,
+            "token_type": "bearer",
+        }
+
+    # -------------------------
+    # GOOGLE LOGIN
+    # -------------------------
+    def google_login(self, request: GoogleAuthRequest):
+        try:
+            id_info = google_jwt.decode(
+                request.id_token,
+                verify=False,
+            )
+
+            if request.client_id:
+                if id_info.get("aud") != request.client_id:
+                    raise AppException(
+                        message="Invalid Google token audience",
+                        status_code=401,
+                        error_code="INVALID_GOOGLE_TOKEN",
+                    )
+            else:
+                if id_info.get("aud") != settings.google_client_id:
+                    raise AppException(
+                        message="Invalid Google token audience",
+                        status_code=401,
+                        error_code="INVALID_GOOGLE_TOKEN",
+                    )
+
+            email = id_info.get("email")
+            if not email:
+                raise AppException(
+                    message="Google account has no email",
+                    status_code=400,
+                    error_code="GOOGLE_NO_EMAIL",
+                )
+
+            google_id = id_info.get("sub")
+            first_name = id_info.get("given_name", "")
+            last_name = id_info.get("family_name", "")
+            avatar = id_info.get("picture")
+
+        except ValueError as e:
+            raise AppException(
+                message="Invalid Google token",
+                status_code=401,
+                error_code="INVALID_GOOGLE_TOKEN",
+            )
+
+        user = self.user_service.get_user_by_email(email)
+
+        if user:
+            if user.provider != AuthProvider.GOOGLE:
+                user.provider = AuthProvider.GOOGLE
+                user.avatar = avatar or user.avatar
+                user.is_verified = True
+                self.user_service.save_user(user)
+        else:
+            username_base = email.split("@")[0]
+            username = username_base
+            counter = 1
+            while self.user_service.get_user_by_username(username):
+                username = f"{username_base}{counter}"
+                counter += 1
+
+            db_user = User(
+                first_name=first_name or "Google",
+                last_name=last_name or "User",
+                username=username,
+                email=email,
+                password=hash_password(str(uuid4())),
+                avatar=avatar,
+                provider=AuthProvider.GOOGLE,
+                is_verified=True,
+            )
+            user = self.user_service.repository.create_user(db_user)
 
         tokens = self._create_auth_tokens(user)
 

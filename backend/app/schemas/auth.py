@@ -3,6 +3,11 @@ from pydantic import BaseModel, EmailStr, Field
 from app.schemas.user import UserResponse
 
 
+class GoogleAuthRequest(BaseModel):
+    id_token: str
+    client_id: str | None = None
+
+
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
 

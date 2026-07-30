@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { GoogleOAuthProvider } from "@react-oauth/google"
 import * as React from "react"
 import { BrowserRouter } from "react-router"
 import { Toaster, toast } from "sonner"
@@ -44,16 +45,20 @@ function NetworkStatusNotifier() {
   return null
 }
 
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? ""
+
 export function AppProviders({ children }: AppProvidersProps) {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <BrowserRouter>
-          {children}
-          <NetworkStatusNotifier />
-          <Toaster richColors position="top-right" />
-        </BrowserRouter>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <GoogleOAuthProvider clientId={googleClientId}>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <BrowserRouter>
+            {children}
+            <NetworkStatusNotifier />
+            <Toaster richColors position="top-right" />
+          </BrowserRouter>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </GoogleOAuthProvider>
   )
 }

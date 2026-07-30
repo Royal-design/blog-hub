@@ -81,6 +81,11 @@ const RegisterPage = lazy(() =>
     default: module.RegisterPage,
   }))
 )
+const ResetPasswordPage = lazy(() =>
+  import("@/pages/reset-password-page").then((module) => ({
+    default: module.ResetPasswordPage,
+  }))
+)
 const SearchPage = lazy(() =>
   import("@/pages/search-page").then((module) => ({ default: module.SearchPage }))
 )
@@ -94,6 +99,7 @@ export function AppRoutes() {
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
           <Route path="forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="reset-password" element={<ResetPasswordPage />} />
           <Route
             path="explore"
             element={

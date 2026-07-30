@@ -38,8 +38,12 @@ class EmailService:
             "html": f"""
                 <h2>Password Reset</h2>
                 <p>You requested to reset your password.</p>
-                <a href="{reset_link}">
+                <a href="{reset_link}" style="display:inline-block;padding:12px 24px;background:#6366f1;color:#fff;text-decoration:none;border-radius:8px;font-weight:bold;">
                     Reset Password
                 </a>
+                <p style="margin-top:16px;font-size:13px;color:#666;">
+                    Or copy this link into your browser:<br>
+                    <span style="font-size:12px;">{reset_link}</span>
+                </p>
             """
         })

@@ -61,25 +61,21 @@ export function EditPostPage() {
   })
 
   // Populate form with existing post data once fetched
-  const [hasInitializedTags, setHasInitializedTags] = React.useState(false)
-
   React.useEffect(() => {
-    if (postQuery.data && !hasInitializedTags) {
-      const p = postQuery.data
-      form.reset({
-        title: p.title || "",
-        excerpt: p.excerpt || "",
-        category_id: p.category_id || "",
-        status: p.status === "Draft" ? "Draft" : "Published",
-        content: p.content || "",
-      })
+    if (!postQuery.data) return
 
-      if (p.tags) {
-        setTagIds(p.tags.map((t) => t.id))
-      }
-      setHasInitializedTags(true)
-    }
-  }, [postQuery.data, form, hasInitializedTags])
+    const p = postQuery.data
+    form.reset({
+      title: p.title || "",
+      excerpt: p.excerpt || "",
+      category_id: p.category_id || "",
+      status: p.status === "Draft" ? "Draft" : "Published",
+      content: p.content || "",
+    })
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTagIds(p.tags?.map((t) => t.id) ?? [])
+  }, [postQuery.data, form])
 
   const updatePost = useMutation({
     mutationFn: async (formData: FormData) => {

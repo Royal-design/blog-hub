@@ -3,7 +3,7 @@ import { toast } from "sonner"
 
 import { authService } from "@/services/auth.service"
 import { useAuthStore } from "@/store/auth.store"
-import type { LoginPayload, RegisterPayload } from "@/types/auth"
+import type { GoogleAuthPayload, LoginPayload, RegisterPayload } from "@/types/auth"
 import { getErrorMessage } from "@/utils/error"
 
 export function useLogin() {
@@ -11,9 +11,10 @@ export function useLogin() {
   const setAuth = useAuthStore((state) => state.setAuth)
 
   return useMutation({
-    mutationFn: (payload: LoginPayload) => authService.login(payload),
-    onSuccess: (auth) => {
-      setAuth(auth)
+    mutationFn: ({ rememberMe, ...payload }: LoginPayload & { rememberMe: boolean }) =>
+      authService.login(payload).then((auth) => ({ auth, rememberMe })),
+    onSuccess: ({ auth, rememberMe }) => {
+      setAuth(auth, rememberMe)
       queryClient.invalidateQueries()
       toast.success(`Welcome back, ${auth.user.first_name}.`)
     },
@@ -33,6 +34,23 @@ export function useRegister() {
       setAuth(auth)
       queryClient.invalidateQueries()
       toast.success("Your Blog Hub account is ready.")
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error))
+    },
+  })
+}
+
+export function useGoogleLoginMutation() {
+  const queryClient = useQueryClient()
+  const setAuth = useAuthStore((state) => state.setAuth)
+
+  return useMutation({
+    mutationFn: (payload: GoogleAuthPayload) => authService.googleLogin(payload),
+    onSuccess: (auth) => {
+      setAuth(auth)
+      queryClient.invalidateQueries()
+      toast.success(`Welcome, ${auth.user.first_name}.`)
     },
     onError: (error) => {
       toast.error(getErrorMessage(error))

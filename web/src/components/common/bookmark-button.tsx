@@ -33,11 +33,8 @@ export function BookmarkButton({
     myBookmarksQuery.data?.data?.some((item) => item.post_id === postId)
   )
 
-  const [isBookmarked, setIsBookmarked] = React.useState(isBookmarkedServer)
-
-  React.useEffect(() => {
-    setIsBookmarked(isBookmarkedServer)
-  }, [isBookmarkedServer])
+  const [optimisticBookmarked, setOptimisticBookmarked] = React.useState<boolean | null>(null)
+  const isBookmarked = optimisticBookmarked ?? isBookmarkedServer
 
   const toggleMutation = useMutation({
     mutationFn: async (currentlyBookmarked: boolean) => {
@@ -48,15 +45,16 @@ export function BookmarkButton({
       }
     },
     onMutate: async (currentlyBookmarked: boolean) => {
-      setIsBookmarked(!currentlyBookmarked)
+      setOptimisticBookmarked(!currentlyBookmarked)
       return { previousBookmarked: currentlyBookmarked }
     },
     onError: (_err, _vars, context) => {
       if (context) {
-        setIsBookmarked(context.previousBookmarked)
+        setOptimisticBookmarked(context.previousBookmarked)
       }
     },
     onSettled: () => {
+      setOptimisticBookmarked(null)
       queryClient.invalidateQueries({ queryKey: ["bookmarks", "me"] })
     },
   })

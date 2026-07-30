@@ -1,11 +1,14 @@
 from fastapi import APIRouter, Body, Depends, BackgroundTasks, status
 
+
 from app.api.dependencies.services import get_auth_service
 from app.api.dependencies.auth import get_current_user, get_bearer_token
 
+from app.core.config import settings
 from app.schemas.auth import (
     AuthResponse,
     ForgotPasswordRequest,
+    GoogleAuthRequest,
     LogoutRequest,
     ResetPasswordRequest,
     ChangePasswordRequest,
@@ -56,6 +59,22 @@ def login(
     auth_service: AuthService = Depends(get_auth_service),
 ):
     return auth_service.login(data)
+
+
+# -------------------------
+# GOOGLE LOGIN
+# -------------------------
+@router.post("/google", response_model=SuccessResponse[AuthResponse])
+def google_login(
+    request: GoogleAuthRequest,
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    auth_data = auth_service.google_login(request)
+
+    return SuccessResponse(
+        message="Google login successful",
+        data=AuthResponse.model_validate(auth_data),
+    )
 
 
 # -------------------------

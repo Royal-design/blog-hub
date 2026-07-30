@@ -198,6 +198,12 @@ class UserService:
         return self.repository.update_user(user)
 
     # -------------------------
+    # SAVE USER (for auth service)
+    # -------------------------
+    def save_user(self, user: User) -> User:
+        return self.repository.update_user(user)
+
+    # -------------------------
     # DELETE USER
     # -------------------------
     

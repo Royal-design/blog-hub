@@ -1,6 +1,6 @@
 import { api } from "@/api/axios"
 import type { ApiSuccess } from "@/types/api"
-import type { AuthResponse, LoginPayload, RegisterPayload } from "@/types/auth"
+import type { AuthResponse, GoogleAuthPayload, LoginPayload, RegisterPayload } from "@/types/auth"
 
 export type ChangePasswordPayload = {
   current_password: string
@@ -48,5 +48,13 @@ export const authService = {
 
   async changePassword(payload: ChangePasswordPayload) {
     await api.post("/auth/change-password", payload)
+  },
+
+  async googleLogin(payload: GoogleAuthPayload) {
+    const response = await api.post<ApiSuccess<AuthResponse>>(
+      "/auth/google",
+      payload,
+    )
+    return response.data.data
   },
 }

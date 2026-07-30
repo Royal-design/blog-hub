@@ -1,15 +1,17 @@
 import * as React from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { GoogleLogin } from "@react-oauth/google"
 import { motion } from "framer-motion"
 import { Loader2, Lock, Mail } from "lucide-react"
 import { useForm } from "react-hook-form"
 import { Link, Navigate, useLocation } from "react-router"
+import { toast } from "sonner"
 
 import { AuthCard } from "@/components/auth/auth-card"
 import { AuthLayout } from "@/components/auth/auth-layout"
 import { FormInput } from "@/components/forms/form-input"
 import { FormPasswordInput } from "@/components/forms/form-password-input"
-import { useLogin } from "@/hooks/use-auth"
+import { useGoogleLoginMutation, useLogin } from "@/hooks/use-auth"
 import { loginSchema, type LoginFormValues } from "@/schemas/auth.schema"
 import { useAuthStore } from "@/store/auth.store"
 
@@ -19,6 +21,8 @@ export function LoginPage() {
   const location = useLocation()
   const from = location.state?.from ?? "/"
   const [rememberMe, setRememberMe] = React.useState(true)
+
+  const googleLogin = useGoogleLoginMutation()
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -56,7 +60,9 @@ export function LoginPage() {
       >
         <form
           id="login-form"
-          onSubmit={form.handleSubmit((values) => login.mutate(values))}
+          onSubmit={form.handleSubmit((values) =>
+            login.mutate({ ...values, rememberMe })
+          )}
           className="space-y-4"
         >
           <FormInput
@@ -116,6 +122,45 @@ export function LoginPage() {
               <span className="text-sm font-bold">Sign in</span>
             )}
           </motion.button>
+
+          {/* Divider */}
+          <div className="relative my-2">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-slate-300 dark:border-slate-700" />
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-white dark:bg-slate-900 px-3 font-bold text-muted-foreground">
+                OR CONTINUE WITH
+              </span>
+            </div>
+          </div>
+
+          {/* Google Sign-In Button */}
+          <div className="flex justify-center">
+            {googleLogin.isPending ? (
+              <div className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-6 font-bold text-slate-800 dark:text-slate-200 shadow-sm">
+                <Loader2 className="size-5 animate-spin stroke-[2.5]" />
+                <span className="text-sm">Signing in...</span>
+              </div>
+            ) : (
+              <GoogleLogin
+                onSuccess={(credentialResponse) => {
+                  if (credentialResponse.credential) {
+                    googleLogin.mutate({
+                      id_token: credentialResponse.credential,
+                      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+                    })
+                  }
+                }}
+                onError={() => toast.error("Google sign-in failed")}
+                theme="outline"
+                size="large"
+                text="signin_with"
+                shape="rectangular"
+                width="400"
+              />
+            )}
+          </div>
         </form>
       </AuthCard>
     </AuthLayout>
