@@ -24,7 +24,7 @@ export function BookmarkButton({
 
   const myBookmarksQuery = useQuery({
     queryKey: ["bookmarks", "me"],
-    queryFn: bookmarkService.getMyBookmarks,
+    queryFn: () => bookmarkService.getMyBookmarks(),
     enabled: Boolean(user),
     staleTime: 60_000,
   })

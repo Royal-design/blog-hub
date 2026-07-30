@@ -29,7 +29,7 @@ export function LikeButton({
   // Query user's likes to determine if current post is liked
   const myLikesQuery = useQuery({
     queryKey: ["likes", "me"],
-    queryFn: likeService.getMyLikes,
+    queryFn: () => likeService.getMyLikes(),
     enabled: Boolean(user),
     staleTime: 60_000,
   })
