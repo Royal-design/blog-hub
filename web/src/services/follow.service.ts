@@ -1,14 +1,16 @@
 import { api } from "@/api/axios"
+import type { ApiSuccess } from "@/types/api"
+import type { FollowerResponse, FollowingResponse } from "@/types/follow"
 
 export const followService = {
-  async getFollowers(userId: string) {
-    const response = await api.get(`/follows/followers/${userId}`)
-    return response.data.data
+  async getFollowers(userId: string, params?: { page?: number; page_size?: number }) {
+    const response = await api.get<ApiSuccess<FollowerResponse[]>>(`/follows/followers/${userId}`, { params })
+    return response.data
   },
 
-  async getFollowing(userId: string) {
-    const response = await api.get(`/follows/following/${userId}`)
-    return response.data.data
+  async getFollowing(userId: string, params?: { page?: number; page_size?: number }) {
+    const response = await api.get<ApiSuccess<FollowingResponse[]>>(`/follows/following/${userId}`, { params })
+    return response.data
   },
 
   async followUser(userId: string) {

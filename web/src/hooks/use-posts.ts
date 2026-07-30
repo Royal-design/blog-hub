@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query"
+import { keepPreviousData, useQuery } from "@tanstack/react-query"
 
 import { categoryService } from "@/services/category.service"
 import { postService } from "@/services/post.service"
@@ -11,15 +11,15 @@ export const queryKeys = {
   tags: ["tags"] as const,
 }
 
-export function usePosts() {
+export function usePosts(page: number = 1, pageSize: number = 10) {
   const isAuthenticated = Boolean(useAuthStore((state) => state.accessToken))
 
   return useQuery({
-    queryKey: queryKeys.posts,
-    queryFn: postService.getPosts,
+    queryKey: [...queryKeys.posts, { page, pageSize }],
+    queryFn: () => postService.getPosts({ page, page_size: pageSize }),
     enabled: isAuthenticated,
     staleTime: 60_000,
-    placeholderData: (previousData) => previousData,
+    placeholderData: keepPreviousData,
   })
 }
 

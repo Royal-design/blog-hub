@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 
 from app.api.dependencies.auth import get_current_user
 from app.api.dependencies.services import get_follow_service
@@ -17,12 +17,15 @@ router = APIRouter(dependencies=[Depends(get_current_user)])
 def get_followers(
     user_id: UUID,
     follow_service: Annotated[FollowService, Depends(get_follow_service)],
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
 ):
-    followers = follow_service.get_followers(user_id)
+    result = follow_service.get_followers(user_id, page=page, page_size=page_size)
 
     return SuccessResponse(
         message="Followers retrieved successfully",
-        data=followers,
+        data=result["data"],
+        meta=result["meta"],
     )
 
 
@@ -30,12 +33,15 @@ def get_followers(
 def get_following(
     user_id: UUID,
     follow_service: Annotated[FollowService, Depends(get_follow_service)],
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
 ):
-    following = follow_service.get_following(user_id)
+    result = follow_service.get_following(user_id, page=page, page_size=page_size)
 
     return SuccessResponse(
         message="Following retrieved successfully",
-        data=following,
+        data=result["data"],
+        meta=result["meta"],
     )
 
 

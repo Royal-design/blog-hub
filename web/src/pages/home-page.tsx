@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { motion } from "framer-motion"
 import { FileText, Sparkles } from "lucide-react"
 import { Link } from "react-router"
@@ -9,13 +10,15 @@ import { LeftSidebar } from "@/components/layout/left-sidebar"
 import { RightSidebar } from "@/components/layout/right-sidebar"
 import { PostCardSkeleton } from "@/components/skeletons/post-card-skeleton"
 import { buttonVariants } from "@/components/ui/button-variants"
+import { Pagination } from "@/components/ui/pagination"
 import { usePosts } from "@/hooks/use-posts"
 import { useAuthStore } from "@/store/auth.store"
 import { getErrorMessage } from "@/utils/error"
 
 export function HomePage() {
   const user = useAuthStore((state) => state.user)
-  const postsQuery = usePosts()
+  const [page, setPage] = useState(1)
+  const postsQuery = usePosts(page)
 
   // Unauthenticated Hero Section
   if (!user) {
@@ -69,7 +72,7 @@ export function HomePage() {
 
   // Filter ONLY Published posts (strictly excluding Drafts and Archived)
   const publishedPosts =
-    postsQuery.data?.filter((post) => post.status === "Published") ?? []
+    postsQuery.data?.data?.filter((post) => post.status === "Published") ?? []
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-[260px_1fr] xl:grid-cols-[260px_1fr_300px] pb-12">
@@ -126,6 +129,15 @@ export function HomePage() {
             description="Be the first creator to publish an article to the home feed!"
             actionLabel="Write First Post"
             onAction={() => window.location.assign("/posts/new")}
+          />
+        )}
+
+        {postsQuery.data?.meta && (
+          <Pagination
+            page={page}
+            totalPages={postsQuery.data.meta.total_pages ?? 1}
+            total={postsQuery.data.meta.total ?? 0}
+            onPageChange={setPage}
           />
         )}
       </main>

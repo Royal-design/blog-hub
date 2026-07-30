@@ -10,6 +10,7 @@ import { FormSearch } from "@/components/forms/form-search"
 import { LeftSidebar } from "@/components/layout/left-sidebar"
 import { RightSidebar } from "@/components/layout/right-sidebar"
 import { PostCardSkeleton } from "@/components/skeletons/post-card-skeleton"
+import { Pagination } from "@/components/ui/pagination"
 import { useCategories, usePosts } from "@/hooks/use-posts"
 import { userService } from "@/services/user.service"
 import { useAppStore } from "@/store/app.store"
@@ -23,22 +24,25 @@ export function SearchPage() {
   const activeTab = searchParams.get("tab") === "users" ? "users" : "stories"
   const currentUser = useAuthStore((state) => state.user)
 
-  const postsQuery = usePosts()
+  const [page, setPage] = React.useState(1)
+  const postsQuery = usePosts(page)
   const categoriesQuery = useCategories()
   const [selectedCategoryId, setSelectedCategoryId] = React.useState<string | null>(null)
+  const [usersPage, setUsersPage] = React.useState(1)
 
   const usersQuery = useQuery({
-    queryKey: ["search-users", query],
-    queryFn: () => userService.getUsers({ search: query.trim() || undefined, page_size: 30 }),
+    queryKey: ["search-users", query, usersPage],
+    queryFn: () => userService.getUsers({ search: query.trim() || undefined, page: usersPage, page_size: 30 }),
     enabled: Boolean(currentUser),
     staleTime: 30_000,
+    placeholderData: (prev) => prev,
   })
 
   const normalizedQuery = query.trim().toLowerCase()
 
   // Filter posts
   const posts =
-    postsQuery.data?.filter((post) => {
+    postsQuery.data?.data?.filter((post) => {
       const matchesCategory = selectedCategoryId
         ? post.category_id === selectedCategoryId
         : true
@@ -64,7 +68,7 @@ export function SearchPage() {
 
   // Filter users
   const users =
-    usersQuery.data?.filter((u) => {
+    usersQuery.data?.data?.filter((u) => {
       if (u.id === currentUser?.id) return false
       if (!normalizedQuery) return true
       const fullName = `${u.first_name || ""} ${u.last_name || ""}`.toLowerCase()
@@ -175,11 +179,21 @@ export function SearchPage() {
               ))}
             </div>
           ) : posts.length ? (
-            <div className="grid gap-5 sm:grid-cols-2">
-              {posts.map((post) => (
-                <PostCard key={post.id} post={post} />
-              ))}
-            </div>
+            <>
+              <div className="grid gap-5 sm:grid-cols-2">
+                {posts.map((post) => (
+                  <PostCard key={post.id} post={post} />
+                ))}
+              </div>
+              {postsQuery.data?.meta && (
+                <Pagination
+                  page={page}
+                  totalPages={postsQuery.data.meta.total_pages ?? 1}
+                  total={postsQuery.data.meta.total ?? 0}
+                  onPageChange={setPage}
+                />
+              )}
+            </>
           ) : (
             <EmptyState
               icon={Search}
@@ -201,11 +215,21 @@ export function SearchPage() {
               ))}
             </div>
           ) : users.length ? (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {users.map((user) => (
-                <UserCard key={user.id} user={user} />
-              ))}
-            </div>
+            <>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {users.map((user) => (
+                  <UserCard key={user.id} user={user} />
+                ))}
+              </div>
+              {usersQuery.data?.meta && (
+                <Pagination
+                  page={usersPage}
+                  totalPages={usersQuery.data.meta.total_pages ?? 1}
+                  total={usersQuery.data.meta.total ?? 0}
+                  onPageChange={setUsersPage}
+                />
+              )}
+            </>
           ) : (
             <EmptyState
               icon={Users}

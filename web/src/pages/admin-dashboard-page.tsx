@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { keepPreviousData } from "@tanstack/react-query"
 import type { LucideIcon } from "lucide-react"
 import {
   Check,
@@ -24,8 +25,10 @@ import { ErrorState } from "@/components/common/error-state"
 import { PageLoader } from "@/components/loaders/page-loader"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { Pagination } from "@/components/ui/pagination"
 import { useCategories, usePosts, useTags } from "@/hooks/use-posts"
 import { categoryService } from "@/services/category.service"
+import { postService } from "@/services/post.service"
 import { tagService } from "@/services/tag.service"
 import { userService } from "@/services/user.service"
 import { useAuthStore } from "@/store/auth.store"
@@ -236,19 +239,38 @@ export function AdminDashboardPage() {
     "users" | "posts" | "categories" | "tags"
   >("users")
   const [searchQuery, setSearchQuery] = React.useState("")
+  const [usersPage, setUsersPage] = React.useState(1)
+  const [postsPage, setPostsPage] = React.useState(1)
 
   const isAdmin = user?.role === "admin"
 
   const usersQuery = useQuery({
-    queryKey: ["admin", "users", searchQuery],
-    queryFn: () => userService.getUsers({ search: searchQuery, page_size: 50 }),
+    queryKey: ["admin", "users", searchQuery, usersPage],
+    queryFn: () => userService.getUsers({ search: searchQuery, page: usersPage, page_size: 20 }),
+    staleTime: 30_000,
+    enabled: isAdmin,
+    placeholderData: keepPreviousData,
+  })
+
+  const postsQuery = usePosts(postsPage, 20)
+  const categoriesQuery = useCategories()
+  const tagsQuery = useTags()
+
+  // Separate queries for metrics (count all items)
+  const allUsersQuery = useQuery({
+    queryKey: ["admin", "users", "all"],
+    queryFn: () => userService.getUsers({ page_size: 1000 }),
     staleTime: 30_000,
     enabled: isAdmin,
   })
 
-  const postsQuery = usePosts()
-  const categoriesQuery = useCategories()
-  const tagsQuery = useTags()
+  const allPostsQuery = useQuery({
+    queryKey: ["posts", "all"],
+    queryFn: () => postService.getPosts({ page_size: 1000 }),
+    staleTime: 60_000,
+    enabled: isAdmin,
+    placeholderData: keepPreviousData,
+  })
 
   // ── User Role Mutation ──
   const roleMutation = useMutation({
@@ -350,8 +372,8 @@ export function AdminDashboardPage() {
     )
   }
 
-  const totalUsers = usersQuery.data?.length ?? 0
-  const totalPosts = postsQuery.data?.length ?? 0
+  const totalUsers = allUsersQuery.data?.data?.length ?? 0
+  const totalPosts = allPostsQuery.data?.data?.length ?? 0
   const totalCategories = categoriesQuery.data?.length ?? 0
   const totalTags = tagsQuery.data?.length ?? 0
 
@@ -499,144 +521,154 @@ export function AdminDashboardPage() {
             <PageLoader />
           ) : usersQuery.isError ? (
             <ErrorState description={getErrorMessage(usersQuery.error)} />
-          ) : usersQuery.data?.length === 0 ? (
+          ) : !usersQuery.data?.data?.length ? (
             <EmptyState
               icon={Users}
               title="No users found"
               description="Try adjusting your search filter."
             />
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-card shadow-xs dark:border-slate-800/80">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs font-semibold">
-                  <thead className="border-b bg-slate-50 tracking-wider text-muted-foreground uppercase dark:bg-slate-900/50">
-                    <tr>
-                      <th className="p-4">User</th>
-                      <th className="p-4">Email</th>
-                      <th className="p-4">Current Role</th>
-                      <th className="p-4 text-right">Role Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {usersQuery.data?.map((u) => {
-                      const isSelf = Boolean(user && u.id === user.id)
-                      return (
-                        <tr
-                          key={u.id}
-                          className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30"
-                        >
-                          <td className="p-4">
-                            <div className="flex items-center gap-3">
-                              {u.avatar && u.avatar !== "string" ? (
-                                <img
-                                  src={u.avatar}
-                                  alt=""
-                                  className="size-9 rounded-full object-cover"
-                                />
-                              ) : (
-                                <div className="grid size-9 place-items-center rounded-full bg-primary/10 font-bold text-primary">
-                                  {getInitials(
-                                    `${u.first_name || ""} ${u.last_name || ""}`,
-                                    u.first_name,
-                                    u.last_name,
-                                    u.username
-                                  )}
+            <>
+              <div className="overflow-hidden rounded-2xl border border-slate-200/80 bg-card shadow-xs dark:border-slate-800/80">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs font-semibold">
+                    <thead className="border-b bg-slate-50 tracking-wider text-muted-foreground uppercase dark:bg-slate-900/50">
+                      <tr>
+                        <th className="p-4">User</th>
+                        <th className="p-4">Email</th>
+                        <th className="p-4">Current Role</th>
+                        <th className="p-4 text-right">Role Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {usersQuery.data.data.map((u) => {
+                        const isSelf = Boolean(user && u.id === user.id)
+                        return (
+                          <tr
+                            key={u.id}
+                            className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30"
+                          >
+                            <td className="p-4">
+                              <div className="flex items-center gap-3">
+                                {u.avatar && u.avatar !== "string" ? (
+                                  <img
+                                    src={u.avatar}
+                                    alt=""
+                                    className="size-9 rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="grid size-9 place-items-center rounded-full bg-primary/10 font-bold text-primary">
+                                    {getInitials(
+                                      `${u.first_name || ""} ${u.last_name || ""}`,
+                                      u.first_name,
+                                      u.last_name,
+                                      u.username
+                                    )}
+                                  </div>
+                                )}
+                                <div>
+                                  <p className="font-extrabold text-foreground">
+                                    {u.first_name} {u.last_name}
+                                  </p>
+                                  <p className="text-[11px] text-muted-foreground">
+                                    @{u.username}
+                                  </p>
                                 </div>
-                              )}
-                              <div>
-                                <p className="font-extrabold text-foreground">
-                                  {u.first_name} {u.last_name}
-                                </p>
-                                <p className="text-[11px] text-muted-foreground">
-                                  @{u.username}
-                                </p>
                               </div>
-                            </div>
-                          </td>
-                          <td className="p-4 font-mono text-slate-600 dark:text-slate-400">
-                            {u.email}
-                          </td>
-                          <td className="p-4">
-                            <span
-                              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-extrabold ${
-                                u.role === "admin"
-                                  ? "border border-purple-500/20 bg-purple-500/10 text-purple-600 dark:text-purple-400"
-                                  : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                              }`}
-                            >
-                              {u.role === "admin" && (
-                                <ShieldCheck className="size-3" />
-                              )}
-                              {u.role.toUpperCase()}
-                            </span>
-                          </td>
-                          <td className="p-4 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              {u.role === "user" ? (
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  disabled={roleMutation.isPending}
-                                  onClick={() =>
-                                    roleMutation.mutate({
-                                      userId: u.id,
-                                      role: "admin",
-                                    })
-                                  }
-                                  className="rounded-xl border-purple-200 font-bold text-purple-600 hover:bg-purple-500/10 dark:text-purple-400"
-                                >
-                                  <UserCheck className="size-3.5" />
-                                  Make Admin
-                                </Button>
-                              ) : (
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  disabled={isSelf || roleMutation.isPending}
-                                  onClick={() =>
-                                    roleMutation.mutate({
-                                      userId: u.id,
-                                      role: "user",
-                                    })
-                                  }
-                                  className="rounded-xl font-bold text-slate-600"
-                                >
-                                  <UserX className="size-3.5" />
-                                  Demote to User
-                                </Button>
-                              )}
-
-                              {!isSelf && (
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  disabled={deleteUserMutation.isPending}
-                                  onClick={() => {
-                                    if (
-                                      confirm(
-                                        `Are you sure you want to delete ${u.username}?`
-                                      )
-                                    ) {
-                                      deleteUserMutation.mutate(u.id)
+                            </td>
+                            <td className="p-4 font-mono text-slate-600 dark:text-slate-400">
+                              {u.email}
+                            </td>
+                            <td className="p-4">
+                              <span
+                                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-extrabold ${
+                                  u.role === "admin"
+                                    ? "border border-purple-500/20 bg-purple-500/10 text-purple-600 dark:text-purple-400"
+                                    : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                                }`}
+                              >
+                                {u.role === "admin" && (
+                                  <ShieldCheck className="size-3" />
+                                )}
+                                {u.role.toUpperCase()}
+                              </span>
+                            </td>
+                            <td className="p-4 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                {u.role === "user" ? (
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={roleMutation.isPending}
+                                    onClick={() =>
+                                      roleMutation.mutate({
+                                        userId: u.id,
+                                        role: "admin",
+                                      })
                                     }
-                                  }}
-                                  className="text-destructive hover:bg-destructive/10"
-                                >
-                                  <Trash2 className="size-4" />
-                                </Button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
+                                    className="rounded-xl border-purple-200 font-bold text-purple-600 hover:bg-purple-500/10 dark:text-purple-400"
+                                  >
+                                    <UserCheck className="size-3.5" />
+                                    Make Admin
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    disabled={isSelf || roleMutation.isPending}
+                                    onClick={() =>
+                                      roleMutation.mutate({
+                                        userId: u.id,
+                                        role: "user",
+                                      })
+                                    }
+                                    className="rounded-xl font-bold text-slate-600"
+                                  >
+                                    <UserX className="size-3.5" />
+                                    Demote to User
+                                  </Button>
+                                )}
+
+                                {!isSelf && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    disabled={deleteUserMutation.isPending}
+                                    onClick={() => {
+                                      if (
+                                        confirm(
+                                          `Are you sure you want to delete ${u.username}?`
+                                        )
+                                      ) {
+                                        deleteUserMutation.mutate(u.id)
+                                      }
+                                    }}
+                                    className="text-destructive hover:bg-destructive/10"
+                                  >
+                                    <Trash2 className="size-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+              {usersQuery.data?.meta && (
+                <Pagination
+                  page={usersPage}
+                  totalPages={usersQuery.data.meta.total_pages ?? 1}
+                  total={usersQuery.data.meta.total ?? 0}
+                  onPageChange={setUsersPage}
+                />
+              )}
+            </>
           )}
         </div>
       )}
@@ -646,62 +678,72 @@ export function AdminDashboardPage() {
         <div className="space-y-4">
           {postsQuery.isLoading ? (
             <PageLoader />
-          ) : postsQuery.data?.length === 0 ? (
+          ) : !postsQuery.data?.data?.length ? (
             <EmptyState
               icon={FileText}
               title="No posts yet"
               description="No stories have been published yet."
             />
           ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {postsQuery.data?.map((p) => (
-                <Card
-                  key={p.id}
-                  className="group overflow-hidden rounded-2xl border border-slate-200/80 p-0 shadow-xs transition-shadow hover:shadow-md dark:border-slate-800/80"
-                >
-                  {/* Cover Image */}
-                  <div className="relative h-40 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
-                    {p.cover_image ? (
-                      <img
-                        src={p.cover_image}
-                        alt={p.title}
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center">
-                        <FileText className="size-10 text-slate-300 dark:text-slate-600" />
-                      </div>
-                    )}
-                    {/* Status badge overlaid on image */}
-                    <span
-                      className={`absolute top-2 right-2 rounded-full px-2.5 py-0.5 text-[11px] font-bold shadow-sm ${
-                        p.status === "Published"
-                          ? "bg-emerald-500/90 text-white"
-                          : p.status === "Draft"
-                            ? "bg-slate-700/80 text-white"
-                            : "bg-amber-500/90 text-white"
-                      }`}
-                    >
-                      {p.status}
-                    </span>
-                  </div>
+            <>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {postsQuery.data.data.map((p) => (
+                  <Card
+                    key={p.id}
+                    className="group overflow-hidden rounded-2xl border border-slate-200/80 p-0 shadow-xs transition-shadow hover:shadow-md dark:border-slate-800/80"
+                  >
+                    {/* Cover Image */}
+                    <div className="relative h-40 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                      {p.cover_image ? (
+                        <img
+                          src={p.cover_image}
+                          alt={p.title}
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <FileText className="size-10 text-slate-300 dark:text-slate-600" />
+                        </div>
+                      )}
+                      {/* Status badge overlaid on image */}
+                      <span
+                        className={`absolute top-2 right-2 rounded-full px-2.5 py-0.5 text-[11px] font-bold shadow-sm ${
+                          p.status === "Published"
+                            ? "bg-emerald-500/90 text-white"
+                            : p.status === "Draft"
+                              ? "bg-slate-700/80 text-white"
+                              : "bg-amber-500/90 text-white"
+                        }`}
+                      >
+                        {p.status}
+                      </span>
+                    </div>
 
-                  {/* Card Body */}
-                  <div className="space-y-1.5 p-4">
-                    <h4 className="line-clamp-2 text-sm leading-snug font-extrabold text-foreground">
-                      {p.title}
-                    </h4>
-                    <p className="text-[11px] text-muted-foreground">
-                      By{" "}
-                      <span className="font-bold text-foreground">
-                        @{p.author?.username}
-                      </span>{" "}
-                      • <span className="font-medium">{p.category?.name}</span>
-                    </p>
-                  </div>
-                </Card>
-              ))}
-            </div>
+                    {/* Card Body */}
+                    <div className="space-y-1.5 p-4">
+                      <h4 className="line-clamp-2 text-sm leading-snug font-extrabold text-foreground">
+                        {p.title}
+                      </h4>
+                      <p className="text-[11px] text-muted-foreground">
+                        By{" "}
+                        <span className="font-bold text-foreground">
+                          @{p.author?.username}
+                        </span>{" "}
+                        • <span className="font-medium">{p.category?.name}</span>
+                      </p>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+              {postsQuery.data?.meta && (
+                <Pagination
+                  page={postsPage}
+                  totalPages={postsQuery.data.meta.total_pages ?? 1}
+                  total={postsQuery.data.meta.total ?? 0}
+                  onPageChange={setPostsPage}
+                />
+              )}
+            </>
           )}
         </div>
       )}

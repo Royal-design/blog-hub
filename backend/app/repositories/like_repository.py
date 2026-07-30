@@ -17,8 +17,8 @@ class LikeRepository:
             .first()
         )
 
-    def get_likes_by_user_id(self, user_id: UUID):
-        return (
+    def get_likes_by_user_id(self, user_id: UUID, page: int = 1, page_size: int = 10):
+        query = (
             self.db.query(Like)
             .options(
                 selectinload(Like.post),
@@ -28,8 +28,11 @@ class LikeRepository:
                 selectinload(Like.post).selectinload(Post.images),
             )
             .filter(Like.user_id == user_id)
-            .all()
         )
+        total = query.count()
+        offset = (page - 1) * page_size
+        likes = query.offset(offset).limit(page_size).all()
+        return likes, total
 
     def create_like(self, like: Like):
         self.db.add(like)

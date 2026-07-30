@@ -35,7 +35,7 @@ export function LikeButton({
   })
 
   const isLikedServer = Boolean(
-    myLikesQuery.data?.some((item) => item.post_id === postId)
+    myLikesQuery.data?.data?.some((item) => item.post_id === postId)
   )
 
   const [optimisticState, setOptimisticState] = React.useState<{

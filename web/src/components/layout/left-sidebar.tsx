@@ -21,23 +21,23 @@ export function LeftSidebar() {
   const user = useAuthStore((state) => state.user)
   const categoriesQuery = useCategories()
   const tagsQuery = useTags()
-  const postsQuery = usePosts()
+  const postsQuery = usePosts(1, 100)
 
   const followersQuery = useQuery({
-    queryKey: ["followers", user?.id],
-    queryFn: () => followService.getFollowers(user?.id ?? ""),
+    queryKey: ["followers", user?.id, "sidebar"],
+    queryFn: () => followService.getFollowers(user?.id ?? "", { page_size: 100 }),
     enabled: Boolean(user?.id),
     staleTime: 60_000,
   })
 
   const followingQuery = useQuery({
-    queryKey: ["following", user?.id],
-    queryFn: () => followService.getFollowing(user?.id ?? ""),
+    queryKey: ["following", user?.id, "sidebar"],
+    queryFn: () => followService.getFollowing(user?.id ?? "", { page_size: 100 }),
     enabled: Boolean(user?.id),
     staleTime: 60_000,
   })
 
-  const myPosts = postsQuery.data?.filter((p) => p.author_id === user?.id) ?? []
+  const myPosts = postsQuery.data?.data?.filter((p) => p.author_id === user?.id) ?? []
 
   const navItems = [
     { label: "Home Feed", href: "/", icon: Home },
@@ -85,13 +85,13 @@ export function LeftSidebar() {
           <div className="grid grid-cols-2 gap-2 pt-2 text-center border-t border-slate-100 dark:border-slate-800/80">
             <NavLink to="/followers" className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
               <p className="text-base font-extrabold text-foreground">
-                {followersQuery.data?.length ?? 0}
+                {followersQuery.data?.data?.length ?? 0}
               </p>
               <p className="text-[11px] font-semibold text-muted-foreground">Followers</p>
             </NavLink>
             <NavLink to="/following-list" className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
               <p className="text-base font-extrabold text-foreground">
-                {followingQuery.data?.length ?? 0}
+                {followingQuery.data?.data?.length ?? 0}
               </p>
               <p className="text-[11px] font-semibold text-muted-foreground">Following</p>
             </NavLink>

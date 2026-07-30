@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 
 from app.api.dependencies.auth import get_current_user
 from app.api.dependencies.services import get_bookmark_service
@@ -17,12 +17,15 @@ router = APIRouter(dependencies=[Depends(get_current_user)])
 def get_my_bookmarks(
     current_user: Annotated[User, Depends(get_current_user)],
     bookmark_service: Annotated[BookmarkService, Depends(get_bookmark_service)],
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
 ):
-    bookmarks = bookmark_service.get_my_bookmarks(current_user.id)
+    result = bookmark_service.get_my_bookmarks(current_user.id, page=page, page_size=page_size)
 
     return SuccessResponse(
         message="Bookmarked posts retrieved successfully",
-        data=bookmarks,
+        data=result["data"],
+        meta=result["meta"],
     )
 
 

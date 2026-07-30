@@ -6,6 +6,7 @@ from fastapi import (
     Depends,
     File,
     Form,
+    Query,
     UploadFile,
     status,
 )
@@ -32,12 +33,15 @@ router = APIRouter(
 )
 def get_all_posts(
     post_service: Annotated[PostService, Depends(get_post_service)],
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
 ):
-    posts = post_service.get_all_posts()
+    result = post_service.get_all_posts(page=page, page_size=page_size)
 
     return SuccessResponse(
         message="Posts retrieved successfully.",
-        data=posts,
+        data=result["data"],
+        meta=result["meta"],
     )
 
 

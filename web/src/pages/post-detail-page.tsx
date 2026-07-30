@@ -48,9 +48,11 @@ export function PostDetailPage() {
         post_id: postQuery.data?.id ?? "",
       }),
     onSuccess: (newComment) => {
-      queryClient.setQueryData<Comment[]>(
+      queryClient.setQueryData(
         ["comments", postQuery.data?.id],
-        (old = []) => [...old, newComment]
+        (old: { data: Comment[] } | undefined) => ({
+          data: [...(old?.data ?? []), newComment],
+        })
       )
       setCommentText("")
     },
@@ -74,7 +76,7 @@ export function PostDetailPage() {
 
   const post = postQuery.data
   const publishedDate = post.published_at ?? post.created_at
-  const comments = commentsQuery.data ?? []
+  const comments = commentsQuery.data?.data ?? []
   // Top-level comments (where parent_id is null)
   const rootComments = comments.filter((c) => !c.parent_id)
 
@@ -192,6 +194,28 @@ export function PostDetailPage() {
       <div className="max-w-none whitespace-pre-wrap text-base sm:text-lg leading-8 sm:leading-9 text-slate-800 dark:text-slate-200 font-normal">
         {post.content}
       </div>
+
+      {/* Post Images Gallery */}
+      {post.images && post.images.length > 0 ? (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {post.images
+            .slice()
+            .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+            .map((img) => (
+              <div
+                key={img.id}
+                className="overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm"
+              >
+                <img
+                  src={img.image_url}
+                  alt={img.alt_text}
+                  className="aspect-[4/3] w-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+            ))}
+        </div>
+      ) : null}
 
       {/* Interactive Bottom Actions Bar */}
       <div className="flex items-center justify-between p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80">

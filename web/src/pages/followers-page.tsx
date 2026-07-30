@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Users } from "lucide-react"
 
@@ -6,6 +7,7 @@ import { EmptyState } from "@/components/common/empty-state"
 import { ErrorState } from "@/components/common/error-state"
 import { LeftSidebar } from "@/components/layout/left-sidebar"
 import { RightSidebar } from "@/components/layout/right-sidebar"
+import { Pagination } from "@/components/ui/pagination"
 import { followService } from "@/services/follow.service"
 import { useAuthStore } from "@/store/auth.store"
 import type { FollowerResponse } from "@/types/follow"
@@ -13,12 +15,14 @@ import { getErrorMessage } from "@/utils/error"
 
 export function FollowersPage() {
   const user = useAuthStore((state) => state.user)
+  const [page, setPage] = useState(1)
 
   const followersQuery = useQuery({
-    queryKey: ["followers", user?.id],
-    queryFn: () => followService.getFollowers(user?.id ?? ""),
+    queryKey: ["followers", user?.id, page],
+    queryFn: () => followService.getFollowers(user?.id ?? "", { page, page_size: 10 }),
     enabled: Boolean(user?.id),
     staleTime: 60_000,
+    placeholderData: (prev) => prev,
   })
 
   return (
@@ -44,7 +48,7 @@ export function FollowersPage() {
             </p>
           </div>
           <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary border border-primary/20">
-            {followersQuery.data?.length ?? 0} Followers
+            {followersQuery.data?.data?.length ?? 0} Followers
           </span>
         </div>
 
@@ -60,12 +64,22 @@ export function FollowersPage() {
             description={getErrorMessage(followersQuery.error)}
             onRetry={() => void followersQuery.refetch()}
           />
-        ) : followersQuery.data?.length ? (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {followersQuery.data.map((item: FollowerResponse) => (
-              <UserCard key={item.follower_id} user={item.follower} />
-            ))}
-          </div>
+        ) : followersQuery.data?.data?.length ? (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {followersQuery.data.data.map((item: FollowerResponse) => (
+                <UserCard key={item.follower_id} user={item.follower} />
+              ))}
+            </div>
+            {followersQuery.data?.meta && (
+              <Pagination
+                page={page}
+                totalPages={followersQuery.data.meta.total_pages ?? 1}
+                total={followersQuery.data.meta.total ?? 0}
+                onPageChange={setPage}
+              />
+            )}
+          </>
         ) : (
           <EmptyState
             icon={Users}

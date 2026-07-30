@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Bookmark } from "lucide-react"
 
@@ -7,18 +8,21 @@ import { ErrorState } from "@/components/common/error-state"
 import { LeftSidebar } from "@/components/layout/left-sidebar"
 import { RightSidebar } from "@/components/layout/right-sidebar"
 import { PostCardSkeleton } from "@/components/skeletons/post-card-skeleton"
+import { Pagination } from "@/components/ui/pagination"
 import { bookmarkService } from "@/services/bookmark.service"
 import { useAuthStore } from "@/store/auth.store"
 import { getErrorMessage } from "@/utils/error"
 
 export function BookmarksPage() {
   const user = useAuthStore((state) => state.user)
+  const [page, setPage] = useState(1)
 
   const bookmarksQuery = useQuery({
-    queryKey: ["bookmarks", "me"],
-    queryFn: bookmarkService.getMyBookmarks,
+    queryKey: ["bookmarks", "me", page],
+    queryFn: () => bookmarkService.getMyBookmarks({ page, page_size: 10 }),
     enabled: Boolean(user),
     staleTime: 60_000,
+    placeholderData: (prev) => prev,
   })
 
   return (
@@ -44,7 +48,7 @@ export function BookmarksPage() {
             </p>
           </div>
           <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary border border-primary/20">
-            {bookmarksQuery.data?.length ?? 0} Saved
+            {bookmarksQuery.data?.data?.length ?? 0} Saved
           </span>
         </div>
 
@@ -60,12 +64,22 @@ export function BookmarksPage() {
             description={getErrorMessage(bookmarksQuery.error)}
             onRetry={() => void bookmarksQuery.refetch()}
           />
-        ) : bookmarksQuery.data?.length ? (
-          <div className="grid gap-5 sm:grid-cols-2">
-            {bookmarksQuery.data.map((item) => (
-              <PostCard key={item.post_id} post={item.post} />
-            ))}
-          </div>
+        ) : bookmarksQuery.data?.data?.length ? (
+          <>
+            <div className="grid gap-5 sm:grid-cols-2">
+              {bookmarksQuery.data.data.map((item) => (
+                <PostCard key={item.post_id} post={item.post} />
+              ))}
+            </div>
+            {bookmarksQuery.data?.meta && (
+              <Pagination
+                page={page}
+                totalPages={bookmarksQuery.data.meta.total_pages ?? 1}
+                total={bookmarksQuery.data.meta.total ?? 0}
+                onPageChange={setPage}
+              />
+            )}
+          </>
         ) : (
           <EmptyState
             icon={Bookmark}

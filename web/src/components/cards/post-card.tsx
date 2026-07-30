@@ -1,6 +1,8 @@
+import * as React from "react"
+
 import { formatDistanceToNow } from "date-fns"
 import { motion } from "framer-motion"
-import { MessageCircle, Share2, Tag as TagIcon } from "lucide-react"
+import { Image, MessageCircle, Share2, Tag as TagIcon } from "lucide-react"
 import { Link } from "react-router"
 import { toast } from "sonner"
 
@@ -30,6 +32,27 @@ export function PostCard({ post, layout = "grid" }: PostCardProps) {
     post.author?.username
   )
   const date = post.published_at ?? post.created_at
+
+  const galleryImages = React.useMemo(
+    () =>
+      post.images && post.images.length > 0
+        ? [...post.images].sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+        : [],
+    [post.images],
+  )
+
+  const hasGallery = galleryImages.length > 0
+  const [galleryIndex, setGalleryIndex] = React.useState(0)
+  const galleryRef = React.useRef<HTMLDivElement>(null)
+
+  const handleGalleryScroll = React.useCallback(() => {
+    if (galleryRef.current) {
+      const index = Math.round(
+        galleryRef.current.scrollLeft / galleryRef.current.clientWidth,
+      )
+      setGalleryIndex(Math.min(index, galleryImages.length - 1))
+    }
+  }, [galleryImages.length])
 
   const handleShare = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -128,16 +151,46 @@ export function PostCard({ post, layout = "grid" }: PostCardProps) {
           </div>
         </div>
 
-        {/* Cover image side thumbnail */}
-        {post.cover_image && (
+        {/* Gallery / Cover image side thumbnail */}
+        {(hasGallery || post.cover_image) && (
           <Link to={`/posts/${post.slug}`} className="shrink-0">
             <div className="relative aspect-[16/10] sm:w-44 rounded-xl overflow-hidden bg-muted">
-              <img
-                src={post.cover_image}
-                alt=""
-                className="size-full object-cover transition duration-300 group-hover:scale-105"
-                loading="lazy"
-              />
+              {hasGallery ? (
+                <>
+                  <div
+                    ref={galleryRef}
+                    onScroll={handleGalleryScroll}
+                    className="flex h-full overflow-x-auto snap-x snap-mandatory scrollbar-none"
+                  >
+                    {galleryImages.map((img) => (
+                      <div
+                        key={img.id}
+                        className="snap-start shrink-0 w-full h-full"
+                      >
+                        <img
+                          src={img.image_url}
+                          alt={img.alt_text}
+                          className="size-full object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  {galleryImages.length > 1 && (
+                    <div className="absolute bottom-1.5 right-1.5 flex items-center gap-1 rounded-full bg-black/65 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
+                      <Image className="size-2.5" />
+                      {galleryIndex + 1}/{galleryImages.length}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <img
+                  src={post.cover_image!}
+                  alt=""
+                  className="size-full object-cover transition duration-300 group-hover:scale-105"
+                  loading="lazy"
+                />
+              )}
             </div>
           </Link>
         )}
@@ -153,7 +206,35 @@ export function PostCard({ post, layout = "grid" }: PostCardProps) {
     >
       <Link to={`/posts/${post.slug}`} className="block">
         <div className="relative aspect-[16/10] overflow-hidden bg-muted">
-          {post.cover_image ? (
+          {hasGallery ? (
+            <>
+              <div
+                ref={galleryRef}
+                onScroll={handleGalleryScroll}
+                className="flex h-full overflow-x-auto snap-x snap-mandatory scrollbar-none"
+              >
+                {galleryImages.map((img) => (
+                  <div
+                    key={img.id}
+                    className="snap-start shrink-0 w-full h-full"
+                  >
+                    <img
+                      src={img.image_url}
+                      alt={img.alt_text}
+                      className="size-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                ))}
+              </div>
+              {galleryImages.length > 1 && (
+                <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-full bg-black/65 px-2.5 py-1 text-xs font-bold text-white backdrop-blur-sm">
+                  <Image className="size-3" />
+                  {galleryIndex + 1}/{galleryImages.length}
+                </div>
+              )}
+            </>
+          ) : post.cover_image ? (
             <img
               src={post.cover_image}
               alt=""

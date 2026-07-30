@@ -17,16 +17,19 @@ router = APIRouter(dependencies=[Depends(get_current_user)])
 def get_comments(
     comment_service: Annotated[CommentService, Depends(get_comment_service)],
     post_id: UUID | None = Query(default=None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
 ):
-    comments = (
-        comment_service.get_comments_by_post_id(post_id)
+    result = (
+        comment_service.get_comments_by_post_id(post_id, page=page, page_size=page_size)
         if post_id
-        else comment_service.get_all_comments()
+        else comment_service.get_all_comments(page=page, page_size=page_size)
     )
 
     return SuccessResponse(
         message="Comments retrieved successfully",
-        data=comments,
+        data=result["data"],
+        meta=result["meta"],
     )
 
 

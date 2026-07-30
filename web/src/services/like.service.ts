@@ -3,9 +3,9 @@ import type { ApiSuccess } from "@/types/api"
 import type { Like, LikedPost } from "@/types/like"
 
 export const likeService = {
-  async getMyLikes() {
-    const response = await api.get<ApiSuccess<LikedPost[]>>("/likes/me")
-    return response.data.data
+  async getMyLikes(params?: { page?: number; page_size?: number }) {
+    const response = await api.get<ApiSuccess<LikedPost[]>>("/likes/me", { params })
+    return response.data
   },
 
   async likePost(postId: string) {

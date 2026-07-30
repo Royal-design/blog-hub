@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { format } from "date-fns"
 import { motion } from "framer-motion"
@@ -25,6 +26,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import { Pagination } from "@/components/ui/pagination"
 import { queryKeys, usePosts } from "@/hooks/use-posts"
 import { bookmarkService } from "@/services/bookmark.service"
 import { followService } from "@/services/follow.service"
@@ -35,44 +37,56 @@ import type { Post, PostStatus } from "@/types/post"
 import { getErrorMessage } from "@/utils/error"
 import { getReadingTime } from "@/utils/reading-time"
 
+const ITEMS_PER_PAGE = 10
+
 export function DashboardPage() {
   const user = useAuthStore((state) => state.user)
-  const postsQuery = usePosts()
+  const [page, setPage] = useState(1)
+  const postsQuery = usePosts(1, 100)
   const queryClient = useQueryClient()
 
-  const myPosts =
-    postsQuery.data?.filter((post) => post.author_id === user?.id) ?? []
+  const myPosts = useMemo(
+    () => postsQuery.data?.data?.filter((post) => post.author_id === user?.id) ?? [],
+    [postsQuery.data?.data, user?.id]
+  )
 
   const publishedCount = myPosts.filter((p) => p.status === "Published").length
   const draftCount = myPosts.filter((p) => p.status === "Draft").length
 
   const bookmarksQuery = useQuery({
-    queryKey: ["bookmarks", "me"],
-    queryFn: bookmarkService.getMyBookmarks,
+    queryKey: ["bookmarks", "me", "all"],
+    queryFn: () => bookmarkService.getMyBookmarks({ page_size: 100 }),
     enabled: Boolean(user),
     staleTime: 60_000,
   })
 
   const likesQuery = useQuery({
-    queryKey: ["likes", "me"],
-    queryFn: likeService.getMyLikes,
+    queryKey: ["likes", "me", "all"],
+    queryFn: () => likeService.getMyLikes({ page_size: 100 }),
     enabled: Boolean(user),
     staleTime: 60_000,
   })
 
   const followersQuery = useQuery({
-    queryKey: ["followers", user?.id],
-    queryFn: () => followService.getFollowers(user?.id ?? ""),
+    queryKey: ["followers", user?.id, "all"],
+    queryFn: () => followService.getFollowers(user?.id ?? "", { page_size: 100 }),
     enabled: Boolean(user?.id),
     staleTime: 60_000,
   })
 
   const followingQuery = useQuery({
-    queryKey: ["following", user?.id],
-    queryFn: () => followService.getFollowing(user?.id ?? ""),
+    queryKey: ["following", user?.id, "all"],
+    queryFn: () => followService.getFollowing(user?.id ?? "", { page_size: 100 }),
     enabled: Boolean(user?.id),
     staleTime: 60_000,
   })
+
+  const paginatedPosts = useMemo(() => {
+    const start = (page - 1) * ITEMS_PER_PAGE
+    return myPosts.slice(start, start + ITEMS_PER_PAGE)
+  }, [myPosts, page])
+
+  const totalPages = Math.max(1, Math.ceil(myPosts.length / ITEMS_PER_PAGE))
 
   const deletePostMutation = useMutation({
     mutationFn: postService.deletePost,
@@ -145,7 +159,7 @@ export function DashboardPage() {
         <MetricCard
           icon={Bookmark}
           label="Saved Bookmarks"
-          value={bookmarksQuery.data?.length ?? 0}
+          value={bookmarksQuery.data?.data?.length ?? 0}
           subtitle="Saved stories"
           color="text-indigo-500"
           bg="bg-indigo-500/10"
@@ -153,7 +167,7 @@ export function DashboardPage() {
         <MetricCard
           icon={Heart}
           label="Liked Stories"
-          value={likesQuery.data?.length ?? 0}
+          value={likesQuery.data?.data?.length ?? 0}
           subtitle="Liked stories"
           color="text-rose-500"
           bg="bg-rose-500/10"
@@ -161,7 +175,7 @@ export function DashboardPage() {
         <MetricCard
           icon={Users}
           label="Followers / Following"
-          value={`${followersQuery.data?.length ?? 0} / ${followingQuery.data?.length ?? 0}`}
+          value={`${followersQuery.data?.data?.length ?? 0} / ${followingQuery.data?.data?.length ?? 0}`}
           subtitle="Community network"
           color="text-emerald-500"
           bg="bg-emerald-500/10"
@@ -184,111 +198,123 @@ export function DashboardPage() {
 
         <CardContent className="p-0">
           {myPosts.length ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="border-b border-slate-200/60 bg-slate-50/50 text-xs font-bold text-slate-600 uppercase dark:border-slate-800/60 dark:bg-slate-900/50 dark:text-slate-400">
-                  <tr>
-                    <th className="px-6 py-3.5">Title</th>
-                    <th className="px-6 py-3.5">Category</th>
-                    <th className="px-6 py-3.5">Status</th>
-                    <th className="px-6 py-3.5">Date</th>
-                    <th className="px-6 py-3.5 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200/60 dark:divide-slate-800/60">
-                  {myPosts.map((post) => (
-                    <tr
-                      key={post.id}
-                      className="transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-900/40"
-                    >
-                      <td className="px-6 py-4 font-semibold text-foreground">
-                        <div className="max-w-md truncate">
-                          <Link
-                            to={`/posts/${post.slug}`}
-                            className="group flex items-center gap-1.5 transition-colors hover:text-primary"
-                          >
-                            <span>{post.title}</span>
-                            <ArrowUpRight className="size-3.5 text-primary opacity-0 transition-opacity group-hover:opacity-100" />
-                          </Link>
-                          <p className="mt-0.5 text-xs font-normal text-muted-foreground">
-                            {getReadingTime(post.content)}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-                          {post.category.name}
-                        </span>
-                      </td>
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="border-b border-slate-200/60 bg-slate-50/50 text-xs font-bold text-slate-600 uppercase dark:border-slate-800/60 dark:bg-slate-900/50 dark:text-slate-400">
+                    <tr>
+                      <th className="px-6 py-3.5">Title</th>
+                      <th className="px-6 py-3.5">Category</th>
+                      <th className="px-6 py-3.5">Status</th>
+                      <th className="px-6 py-3.5">Date</th>
+                      <th className="px-6 py-3.5 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200/60 dark:divide-slate-800/60">
+                    {paginatedPosts.map((post) => (
+                      <tr
+                        key={post.id}
+                        className="transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-900/40"
+                      >
+                        <td className="px-6 py-4 font-semibold text-foreground">
+                          <div className="max-w-md truncate">
+                            <Link
+                              to={`/posts/${post.slug}`}
+                              className="group flex items-center gap-1.5 transition-colors hover:text-primary"
+                            >
+                              <span>{post.title}</span>
+                              <ArrowUpRight className="size-3.5 text-primary opacity-0 transition-opacity group-hover:opacity-100" />
+                            </Link>
+                            <p className="mt-0.5 text-xs font-normal text-muted-foreground">
+                              {getReadingTime(post.content)}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                            {post.category.name}
+                          </span>
+                        </td>
 
-                      {/* Status Dropdown Select */}
-                      <td className="px-6 py-4">
-                        <select
-                          disabled={updateStatusMutation.isPending}
-                          value={post.status}
-                          onChange={(e) => {
-                            const newStatus = e.target.value as PostStatus
-                            if (newStatus !== post.status) {
-                              updateStatusMutation.mutate({ post, newStatus })
-                            }
-                          }}
-                          className={`cursor-pointer rounded-xl border px-3 py-1.5 text-xs font-bold transition-all outline-none ${
-                            post.status === "Published"
-                              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-                              : "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
-                          }`}
-                        >
-                          <option value="Published" className="bg-background text-foreground font-semibold">
-                            Published
-                          </option>
-                          <option value="Draft" className="bg-background text-foreground font-semibold">
-                            Draft
-                          </option>
-                        </select>
-                      </td>
-
-                      <td className="px-6 py-4 text-xs font-medium whitespace-nowrap text-muted-foreground">
-                        {format(new Date(post.created_at), "MMM d, yyyy")}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Link
-                            to={`/posts/${post.slug}/edit`}
-                            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-slate-200/60 hover:text-foreground dark:hover:bg-slate-800"
-                            title="Edit story"
-                          >
-                            <Pencil className="size-4" />
-                          </Link>
-                          <Link
-                            to={`/posts/${post.slug}`}
-                            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-slate-200/60 hover:text-foreground dark:hover:bg-slate-800"
-                            title="View story"
-                          >
-                            <Eye className="size-4" />
-                          </Link>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (
-                                window.confirm(
-                                  `Are you sure you want to delete "${post.title}"?`
-                                )
-                              ) {
-                                deletePostMutation.mutate(post.id)
+                        {/* Status Dropdown Select */}
+                        <td className="px-6 py-4">
+                          <select
+                            disabled={updateStatusMutation.isPending}
+                            value={post.status}
+                            onChange={(e) => {
+                              const newStatus = e.target.value as PostStatus
+                              if (newStatus !== post.status) {
+                                updateStatusMutation.mutate({ post, newStatus })
                               }
                             }}
-                            className="cursor-pointer rounded-lg p-1.5 text-rose-500 transition-colors hover:bg-rose-500/10 hover:text-rose-700"
-                            title="Delete story"
+                            className={`cursor-pointer rounded-xl border px-3 py-1.5 text-xs font-bold transition-all outline-none ${
+                              post.status === "Published"
+                                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+                                : "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
+                            }`}
                           >
-                            <Trash2 className="size-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                            <option value="Published" className="bg-background text-foreground font-semibold">
+                              Published
+                            </option>
+                            <option value="Draft" className="bg-background text-foreground font-semibold">
+                              Draft
+                            </option>
+                          </select>
+                        </td>
+
+                        <td className="px-6 py-4 text-xs font-medium whitespace-nowrap text-muted-foreground">
+                          {format(new Date(post.created_at), "MMM d, yyyy")}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Link
+                              to={`/posts/${post.slug}/edit`}
+                              className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-slate-200/60 hover:text-foreground dark:hover:bg-slate-800"
+                              title="Edit story"
+                            >
+                              <Pencil className="size-4" />
+                            </Link>
+                            <Link
+                              to={`/posts/${post.slug}`}
+                              className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-slate-200/60 hover:text-foreground dark:hover:bg-slate-800"
+                              title="View story"
+                            >
+                              <Eye className="size-4" />
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (
+                                  window.confirm(
+                                    `Are you sure you want to delete "${post.title}"?`
+                                  )
+                                ) {
+                                  deletePostMutation.mutate(post.id)
+                                }
+                              }}
+                              className="cursor-pointer rounded-lg p-1.5 text-rose-500 transition-colors hover:bg-rose-500/10 hover:text-rose-700"
+                              title="Delete story"
+                            >
+                              <Trash2 className="size-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {totalPages > 1 && (
+                <div className="px-6 py-4">
+                  <Pagination
+                    page={page}
+                    totalPages={totalPages}
+                    total={myPosts.length}
+                    onPageChange={setPage}
+                  />
+                </div>
+              )}
+            </>
           ) : (
             <div className="p-8">
               <EmptyState

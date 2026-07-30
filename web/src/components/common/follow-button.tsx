@@ -32,7 +32,7 @@ export function FollowButton({
   })
 
   const isFollowingServer = Boolean(
-    followingQuery.data?.some((item: FollowingResponse) => item.following_id === userId)
+    followingQuery.data?.data?.some((item: FollowingResponse) => item.following_id === userId)
   )
 
   const isFollowing = optimisticState ?? isFollowingServer

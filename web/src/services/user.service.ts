@@ -5,7 +5,7 @@ import type { User, UserRole } from "@/types/auth"
 export const userService = {
   async getUsers(params?: { search?: string; page?: number; page_size?: number }) {
     const response = await api.get<ApiSuccess<User[]>>("/users/users", { params })
-    return response.data.data
+    return response.data
   },
 
   async getUserById(userId: string) {

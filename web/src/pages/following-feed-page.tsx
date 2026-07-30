@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Users, UserPlus } from "lucide-react"
 
@@ -7,6 +8,7 @@ import { ErrorState } from "@/components/common/error-state"
 import { LeftSidebar } from "@/components/layout/left-sidebar"
 import { RightSidebar } from "@/components/layout/right-sidebar"
 import { PostCardSkeleton } from "@/components/skeletons/post-card-skeleton"
+import { Pagination } from "@/components/ui/pagination"
 import { usePosts } from "@/hooks/use-posts"
 import { followService } from "@/services/follow.service"
 import { useAuthStore } from "@/store/auth.store"
@@ -15,22 +17,23 @@ import { getErrorMessage } from "@/utils/error"
 
 export function FollowingFeedPage() {
   const user = useAuthStore((state) => state.user)
-  const postsQuery = usePosts()
+  const [page, setPage] = useState(1)
+  const postsQuery = usePosts(page)
 
   const followingQuery = useQuery({
-    queryKey: ["following", user?.id],
-    queryFn: () => followService.getFollowing(user?.id ?? ""),
+    queryKey: ["following", user?.id, "all"],
+    queryFn: () => followService.getFollowing(user?.id ?? "", { page_size: 100 }),
     enabled: Boolean(user?.id),
     staleTime: 60_000,
   })
 
   const followedUserIds = new Set(
-    followingQuery.data?.map((f: FollowingResponse) => f.following_id) ?? []
+    followingQuery.data?.data?.map((f: FollowingResponse) => f.following_id) ?? []
   )
 
   // Filter only published posts from followed authors
   const followingPosts =
-    postsQuery.data?.filter(
+    postsQuery.data?.data?.filter(
       (post) => post.status === "Published" && followedUserIds.has(post.author_id)
     ) ?? []
 
@@ -76,11 +79,21 @@ export function FollowingFeedPage() {
             onRetry={() => void postsQuery.refetch()}
           />
         ) : followingPosts.length ? (
-          <div className="grid gap-5 sm:grid-cols-2">
-            {followingPosts.map((post) => (
-              <PostCard key={post.id} post={post} />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-5 sm:grid-cols-2">
+              {followingPosts.map((post) => (
+                <PostCard key={post.id} post={post} />
+              ))}
+            </div>
+            {postsQuery.data?.meta && (
+              <Pagination
+                page={page}
+                totalPages={postsQuery.data.meta.total_pages ?? 1}
+                total={postsQuery.data.meta.total ?? 0}
+                onPageChange={setPage}
+              />
+            )}
+          </>
         ) : (
           <EmptyState
             icon={UserPlus}

@@ -3,9 +3,9 @@ import type { ApiSuccess } from "@/types/api"
 import type { Post } from "@/types/post"
 
 export const postService = {
-  async getPosts() {
-    const response = await api.get<ApiSuccess<Post[]>>("/posts/")
-    return response.data.data
+  async getPosts(params?: { page?: number; page_size?: number }) {
+    const response = await api.get<ApiSuccess<Post[]>>("/posts/", { params })
+    return response.data
   },
 
   async getPostById(postId: string) {

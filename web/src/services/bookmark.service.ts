@@ -3,9 +3,9 @@ import type { ApiSuccess } from "@/types/api"
 import type { LikedPost } from "@/types/like"
 
 export const bookmarkService = {
-  async getMyBookmarks() {
-    const response = await api.get<ApiSuccess<LikedPost[]>>("/bookmarks/me")
-    return response.data.data
+  async getMyBookmarks(params?: { page?: number; page_size?: number }) {
+    const response = await api.get<ApiSuccess<LikedPost[]>>("/bookmarks/me", { params })
+    return response.data
   },
 
   async bookmarkPost(postId: string) {

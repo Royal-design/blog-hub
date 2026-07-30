@@ -11,6 +11,7 @@ from app.models.post_image import PostImage
 from app.models.user import User
 from app.repositories.post_repository import PostRepository
 from app.schemas.post import PostCreate, PostUpdate
+from app.schemas.user import PaginationMeta
 from app.services.category_service import CategoryService
 from app.services.cloudinary_service import CloudinaryService
 from app.services.tag_service import TagService
@@ -29,8 +30,17 @@ class PostService:
         self.tag_service = tag_service
         self.cloudinary_service = cloudinary_service
 
-    def get_all_posts(self):
-        return self.post_repository.get_all_posts()
+    def get_all_posts(self, page: int = 1, page_size: int = 10):
+        posts, total, total_pages = self.post_repository.get_all_posts(page, page_size)
+        return {
+            "data": posts,
+            "meta": PaginationMeta(
+                total=total,
+                page=page,
+                page_size=page_size,
+                total_pages=total_pages,
+            ).model_dump(),
+        }
 
     def get_post_by_id(self, post_id: UUID):
         post = self.post_repository.get_post_by_id(post_id)

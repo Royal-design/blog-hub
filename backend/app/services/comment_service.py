@@ -1,3 +1,4 @@
+from math import ceil
 from uuid import UUID
 
 from app.core.exceptions import AppException
@@ -5,6 +6,7 @@ from app.models.comment import Comment
 from app.models.user import User
 from app.repositories.comment_repository import CommentRepository
 from app.schemas.comment import CommentCreate, CommentUpdate
+from app.schemas.user import PaginationMeta
 from app.services.post_service import PostService
 
 
@@ -17,12 +19,26 @@ class CommentService:
         self.comment_repository = comment_repository
         self.post_service = post_service
 
-    def get_all_comments(self):
-        return self.comment_repository.get_all_comments()
+    def get_all_comments(self, page: int = 1, page_size: int = 10):
+        comments, total = self.comment_repository.get_all_comments(page, page_size)
+        total_pages = ceil(total / page_size) if page_size else 0
+        return {
+            "data": comments,
+            "meta": PaginationMeta(
+                total=total, page=page, page_size=page_size, total_pages=total_pages
+            ).model_dump(),
+        }
 
-    def get_comments_by_post_id(self, post_id: UUID):
+    def get_comments_by_post_id(self, post_id: UUID, page: int = 1, page_size: int = 10):
         self.post_service.get_post_by_id(post_id)
-        return self.comment_repository.get_comments_by_post_id(post_id)
+        comments, total = self.comment_repository.get_comments_by_post_id(post_id, page, page_size)
+        total_pages = ceil(total / page_size) if page_size else 0
+        return {
+            "data": comments,
+            "meta": PaginationMeta(
+                total=total, page=page, page_size=page_size, total_pages=total_pages
+            ).model_dump(),
+        }
 
     def get_comment_by_id(self, comment_id: UUID):
         comment = self.comment_repository.get_comment_by_id(comment_id)

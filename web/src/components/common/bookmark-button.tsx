@@ -30,7 +30,7 @@ export function BookmarkButton({
   })
 
   const isBookmarkedServer = Boolean(
-    myBookmarksQuery.data?.some((item) => item.post_id === postId)
+    myBookmarksQuery.data?.data?.some((item) => item.post_id === postId)
   )
 
   const [isBookmarked, setIsBookmarked] = React.useState(isBookmarkedServer)

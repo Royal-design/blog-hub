@@ -12,16 +12,23 @@ class CommentRepository:
     def _query_with_relationships(self):
         return self.db.query(Comment).options(selectinload(Comment.user))
 
-    def get_all_comments(self):
-        return self._query_with_relationships().all()
+    def get_all_comments(self, page: int = 1, page_size: int = 10):
+        query = self._query_with_relationships().order_by(Comment.created_at.desc())
+        total = query.count()
+        offset = (page - 1) * page_size
+        comments = query.offset(offset).limit(page_size).all()
+        return comments, total
 
-    def get_comments_by_post_id(self, post_id: UUID):
-        return (
+    def get_comments_by_post_id(self, post_id: UUID, page: int = 1, page_size: int = 10):
+        query = (
             self._query_with_relationships()
             .filter(Comment.post_id == post_id)
             .order_by(Comment.created_at.asc())
-            .all()
         )
+        total = query.count()
+        offset = (page - 1) * page_size
+        comments = query.offset(offset).limit(page_size).all()
+        return comments, total
 
     def get_comment_by_id(self, comment_id: UUID):
         return self._query_with_relationships().filter(Comment.id == comment_id).first()

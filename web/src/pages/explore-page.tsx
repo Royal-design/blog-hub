@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Compass, Flame, FolderOpen, Sparkles, Users } from "lucide-react"
 import { Link } from "react-router"
@@ -8,6 +9,7 @@ import { ErrorState } from "@/components/common/error-state"
 import { LeftSidebar } from "@/components/layout/left-sidebar"
 import { RightSidebar } from "@/components/layout/right-sidebar"
 import { PostCardSkeleton } from "@/components/skeletons/post-card-skeleton"
+import { Pagination } from "@/components/ui/pagination"
 import { useCategories, usePosts, useTags } from "@/hooks/use-posts"
 import { userService } from "@/services/user.service"
 import { useAuthStore } from "@/store/auth.store"
@@ -15,7 +17,8 @@ import { getErrorMessage } from "@/utils/error"
 
 export function ExplorePage() {
   const currentUser = useAuthStore((state) => state.user)
-  const postsQuery = usePosts()
+  const [page, setPage] = useState(1)
+  const postsQuery = usePosts(page)
   const categoriesQuery = useCategories()
   const tagsQuery = useTags()
 
@@ -28,10 +31,10 @@ export function ExplorePage() {
 
   // Only published posts for explore feed
   const publishedPosts =
-    postsQuery.data?.filter((p) => p.status === "Published") ?? []
+    postsQuery.data?.data?.filter((p) => p.status === "Published") ?? []
 
   const suggestedUsers =
-    usersQuery.data?.filter((u) => u.id !== currentUser?.id) ?? []
+    usersQuery.data?.data?.filter((u) => u.id !== currentUser?.id) ?? []
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-[260px_1fr] xl:grid-cols-[260px_1fr_300px] pb-12">
@@ -164,6 +167,15 @@ export function ExplorePage() {
               ))}
             </div>
           ) : null}
+
+          {postsQuery.data?.meta && (
+            <Pagination
+              page={page}
+              totalPages={postsQuery.data.meta.total_pages ?? 1}
+              total={postsQuery.data.meta.total ?? 0}
+              onPageChange={setPage}
+            />
+          )}
         </section>
       </main>
 

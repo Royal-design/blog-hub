@@ -17,8 +17,8 @@ class BookmarkRepository:
             .first()
         )
 
-    def get_bookmarks_by_user_id(self, user_id: UUID):
-        return (
+    def get_bookmarks_by_user_id(self, user_id: UUID, page: int = 1, page_size: int = 10):
+        query = (
             self.db.query(Bookmark)
             .options(
                 selectinload(Bookmark.post),
@@ -28,8 +28,11 @@ class BookmarkRepository:
                 selectinload(Bookmark.post).selectinload(Post.images),
             )
             .filter(Bookmark.user_id == user_id)
-            .all()
         )
+        total = query.count()
+        offset = (page - 1) * page_size
+        bookmarks = query.offset(offset).limit(page_size).all()
+        return bookmarks, total
 
     def create_bookmark(self, bookmark: Bookmark):
         self.db.add(bookmark)

@@ -20,7 +20,7 @@ export function RightSidebar() {
   })
 
   const suggestedUsers =
-    usersQuery.data?.filter((u) => u.id !== currentUser?.id).slice(0, 4) ?? []
+    usersQuery.data?.data?.filter((u) => u.id !== currentUser?.id).slice(0, 4) ?? []
 
   return (
     <aside className="space-y-6">

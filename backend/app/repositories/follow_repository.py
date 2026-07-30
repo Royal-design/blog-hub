@@ -19,21 +19,27 @@ class FollowRepository:
             .first()
         )
 
-    def get_followers(self, user_id: UUID):
-        return (
+    def get_followers(self, user_id: UUID, page: int = 1, page_size: int = 10):
+        query = (
             self.db.query(Follow)
             .options(selectinload(Follow.follower))
             .filter(Follow.following_id == user_id)
-            .all()
         )
+        total = query.count()
+        offset = (page - 1) * page_size
+        followers = query.offset(offset).limit(page_size).all()
+        return followers, total
 
-    def get_following(self, user_id: UUID):
-        return (
+    def get_following(self, user_id: UUID, page: int = 1, page_size: int = 10):
+        query = (
             self.db.query(Follow)
             .options(selectinload(Follow.following))
             .filter(Follow.follower_id == user_id)
-            .all()
         )
+        total = query.count()
+        offset = (page - 1) * page_size
+        following = query.offset(offset).limit(page_size).all()
+        return following, total
 
     def create_follow(self, follow: Follow):
         self.db.add(follow)

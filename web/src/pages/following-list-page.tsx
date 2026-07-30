@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Users } from "lucide-react"
 
@@ -6,6 +7,7 @@ import { EmptyState } from "@/components/common/empty-state"
 import { ErrorState } from "@/components/common/error-state"
 import { LeftSidebar } from "@/components/layout/left-sidebar"
 import { RightSidebar } from "@/components/layout/right-sidebar"
+import { Pagination } from "@/components/ui/pagination"
 import { followService } from "@/services/follow.service"
 import { useAuthStore } from "@/store/auth.store"
 import type { FollowingResponse } from "@/types/follow"
@@ -13,12 +15,14 @@ import { getErrorMessage } from "@/utils/error"
 
 export function FollowingListPage() {
   const user = useAuthStore((state) => state.user)
+  const [page, setPage] = useState(1)
 
   const followingQuery = useQuery({
-    queryKey: ["following", user?.id],
-    queryFn: () => followService.getFollowing(user?.id ?? ""),
+    queryKey: ["following", user?.id, page],
+    queryFn: () => followService.getFollowing(user?.id ?? "", { page, page_size: 10 }),
     enabled: Boolean(user?.id),
     staleTime: 60_000,
+    placeholderData: (prev) => prev,
   })
 
   return (
@@ -44,7 +48,7 @@ export function FollowingListPage() {
             </p>
           </div>
           <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary border border-primary/20">
-            {followingQuery.data?.length ?? 0} Following
+            {followingQuery.data?.data?.length ?? 0} Following
           </span>
         </div>
 
@@ -60,12 +64,22 @@ export function FollowingListPage() {
             description={getErrorMessage(followingQuery.error)}
             onRetry={() => void followingQuery.refetch()}
           />
-        ) : followingQuery.data?.length ? (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {followingQuery.data.map((item: FollowingResponse) => (
-              <UserCard key={item.following_id} user={item.following} />
-            ))}
-          </div>
+        ) : followingQuery.data?.data?.length ? (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {followingQuery.data.data.map((item: FollowingResponse) => (
+                <UserCard key={item.following_id} user={item.following} />
+              ))}
+            </div>
+            {followingQuery.data?.meta && (
+              <Pagination
+                page={page}
+                totalPages={followingQuery.data.meta.total_pages ?? 1}
+                total={followingQuery.data.meta.total ?? 0}
+                onPageChange={setPage}
+              />
+            )}
+          </>
         ) : (
           <EmptyState
             icon={Users}
