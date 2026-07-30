@@ -24,7 +24,7 @@ export function AuthCard({
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
       className={cn(
-        "w-full max-w-[480px] rounded-3xl border border-slate-300/80 dark:border-slate-800/90 bg-white/95 dark:bg-slate-900/90 p-6 sm:p-9 shadow-2xl shadow-slate-900/10 dark:shadow-black/60 backdrop-blur-2xl transition-all duration-300",
+        "w-full max-w-[456px] lg:max-w-[480px] rounded-3xl border border-slate-300/80 dark:border-slate-800/90 bg-white/95 dark:bg-slate-900/90 p-5 sm:p-8 shadow-2xl shadow-slate-900/10 dark:shadow-black/60 backdrop-blur-2xl transition-all duration-300",
         className
       )}
     >
@@ -53,7 +53,7 @@ export function AuthCard({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.2 }}
-        className="space-y-6"
+        className="space-y-5"
       >
         {children}
       </motion.div>

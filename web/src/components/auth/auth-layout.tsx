@@ -62,7 +62,7 @@ export function AuthLayout({
         </div>
 
         {/* Right Side: Form Container (58% -> 7 cols) */}
-        <div className="lg:col-span-7 flex flex-col justify-between p-4 sm:p-8 lg:p-12 relative">
+        <div className="lg:col-span-7 flex flex-col justify-between p-3 sm:p-8 lg:p-12 relative">
           {/* Top Bar Navigation (Back to Home & Mobile Logo) */}
           <div className="flex items-center justify-between w-full mb-6 lg:mb-4">
             {/* Mobile Header Logo */}
@@ -86,7 +86,7 @@ export function AuthLayout({
           </div>
 
           {/* Centered Form Wrapper */}
-          <div className="my-auto flex items-center justify-center py-4 w-full">
+          <div className="my-auto flex items-center justify-center py-4 sm:py-6 w-full">
             {children}
           </div>
 
