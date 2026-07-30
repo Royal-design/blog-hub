@@ -7,7 +7,11 @@ class CategoryRepository:
         self.db = db
     
     def get_all_categories(self):
-        return self.db.query(Category).all()
+        return (
+            self.db.query(Category)
+            .order_by(Category.created_at.desc())
+            .all()
+        )
     
     def get_category_by_id(self, category_id: str):
         return self.db.query(Category).filter(Category.id == category_id).first()

@@ -9,7 +9,11 @@ class TagRepository:
         self.db = db
     
     def get_all_tags(self):
-        return self.db.query(Tag).all()
+        return (
+            self.db.query(Tag)
+            .order_by(Tag.created_at.desc())
+            .all()
+        )
     
     def get_tag_by_id(self, tag_id: str):
         return self.db.query(Tag).filter(Tag.id == tag_id).first()

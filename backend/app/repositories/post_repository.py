@@ -18,7 +18,11 @@ class PostRepository:
         )
         
     def get_all_posts(self):
-        return self._query_with_relationships().all()
+        return (
+            self._query_with_relationships()
+            .order_by(Post.created_at.desc())
+            .all()
+        )
     
     def get_post_by_id(self, post_id: str):
         return self._query_with_relationships().filter(Post.id == post_id).first()

@@ -46,12 +46,13 @@ class UserRepository:
         total = query.count()
 
         # -------------------------
-        # PAGINATION
+        # PAGINATION & ORDER
         # -------------------------
         offset = (page - 1) * page_size
 
         users = (
             query
+            .order_by(User.created_at.desc())
             .offset(offset)
             .limit(page_size)
             .all()
