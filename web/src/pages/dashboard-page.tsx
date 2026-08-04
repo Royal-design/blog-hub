@@ -286,15 +286,7 @@ export function DashboardPage() {
                             </Link>
                             <button
                               type="button"
-                              onClick={() => {
-                                if (
-                                  window.confirm(
-                                    `Are you sure you want to delete "${post.title}"?`
-                                  )
-                                ) {
-                                  deletePostMutation.mutate(post.id)
-                                }
-                              }}
+                              onClick={() => setDeleteTarget(post)}
                               className="cursor-pointer rounded-lg p-1.5 text-rose-500 transition-colors hover:bg-rose-500/10 hover:text-rose-700"
                               title="Delete story"
                             >
@@ -329,6 +321,26 @@ export function DashboardPage() {
           )}
         </CardContent>
       </Card>
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+        title="Delete story?"
+        description={
+          deleteTarget
+            ? `Are you sure you want to delete "${deleteTarget.title}"? This action cannot be undone.`
+            : ""
+        }
+        isConfirming={deletePostMutation.isPending}
+        onConfirm={() => {
+          if (deleteTarget) {
+            deletePostMutation.mutate(deleteTarget.id)
+            setDeleteTarget(null)
+          }
+        }}
+      />
     </div>
   )
 }

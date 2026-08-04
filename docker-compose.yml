@@ -25,7 +25,7 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      DATABASE_URL: postgresql+psycopg://postgres:Emmanuel123*@host.docker.internal:5432/blog_api
+      DATABASE_URL: postgresql+psycopg://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/blog_api
     ports:
       - "8000:8000"
 
