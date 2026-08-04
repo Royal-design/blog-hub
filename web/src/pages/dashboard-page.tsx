@@ -19,6 +19,7 @@ import { Link } from "react-router"
 import { toast } from "sonner"
 
 import { EmptyState } from "@/components/common/empty-state"
+import { ConfirmDialog } from "@/components/common/confirm-dialog"
 import {
   Card,
   CardContent,
@@ -98,6 +99,8 @@ export function DashboardPage() {
       toast.error(getErrorMessage(err))
     },
   })
+
+  const [deleteTarget, setDeleteTarget] = useState<Post | null>(null)
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({

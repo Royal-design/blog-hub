@@ -1,6 +1,7 @@
-import { ImagePlus, X } from "lucide-react"
+import { ImagePlus, Link2, X } from "lucide-react"
 import * as React from "react"
 
+import { Button } from "@/components/ui/button"
 import { Field, FieldLabel } from "@/components/ui/field"
 import { cn } from "@/lib/utils"
 
@@ -9,6 +10,7 @@ export interface FormImageUploadProps {
   description?: string
   previewUrl?: string | null
   onFileSelect: (file: File | null) => void
+  onUrlSelect?: (url: string | null) => void
   accept?: string
   containerClassName?: string
 }
@@ -18,15 +20,17 @@ export function FormImageUpload({
   description,
   previewUrl,
   onFileSelect,
+  onUrlSelect,
   accept = "image/*",
   containerClassName,
 }: FormImageUploadProps) {
   const [internalPreview, setInternalPreview] = React.useState<string | null>(
     null
   )
+  const [urlInput, setUrlInput] = React.useState("")
   const inputRef = React.useRef<HTMLInputElement>(null)
 
-  const activePreview = previewUrl || internalPreview
+  const activePreview = internalPreview || previewUrl
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
@@ -34,12 +38,23 @@ export function FormImageUpload({
       const url = URL.createObjectURL(file)
       setInternalPreview(url)
       onFileSelect(file)
+      onUrlSelect?.(null)
     }
+  }
+
+  const handleUrlApply = () => {
+    const trimmed = urlInput.trim()
+    if (!trimmed) return
+    setInternalPreview(trimmed)
+    onUrlSelect?.(trimmed)
+    onFileSelect(null)
   }
 
   const handleClear = () => {
     setInternalPreview(null)
+    setUrlInput("")
     onFileSelect(null)
+    onUrlSelect?.(null)
     if (inputRef.current) {
       inputRef.current.value = ""
     }
@@ -64,16 +79,22 @@ export function FormImageUpload({
               onClick={() => inputRef.current?.click()}
               className="rounded-xl bg-white/90 px-3.5 py-1.5 text-xs font-bold text-slate-900 shadow-md transition-colors hover:bg-white"
             >
-              Change
-            </button>
-            <button
-              type="button"
-              onClick={handleClear}
-              className="rounded-xl bg-rose-600 p-1.5 text-xs font-bold text-white shadow-md transition-colors hover:bg-rose-700"
-            >
-              <X className="size-4" />
+              Upload file
             </button>
           </div>
+          <button
+            type="button"
+            onClick={handleClear}
+            title="Remove image"
+            className="absolute top-2 right-2 flex items-center gap-1 rounded-xl bg-rose-600/95 px-2.5 py-1.5 text-[11px] font-bold text-white shadow-md transition-colors hover:bg-rose-700"
+          >
+            <X className="size-3.5" />
+            Remove
+          </button>
+          <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-lg bg-black/60 px-2 py-1 text-[10px] font-bold text-white">
+            <Link2 className="size-3" />
+            Image link preview
+          </span>
         </div>
       ) : (
         <div
@@ -91,6 +112,28 @@ export function FormImageUpload({
           </p>
         </div>
       )}
+
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Link2 className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            placeholder="Or paste an image URL..."
+            className="h-9 w-full rounded-lg border border-slate-300 bg-background pr-2 pl-8 text-xs font-medium outline-none focus:ring-2 focus:ring-primary/25 dark:border-slate-700"
+          />
+        </div>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={handleUrlApply}
+          className="h-9 shrink-0 rounded-lg text-xs font-bold"
+        >
+          Apply
+        </Button>
+      </div>
 
       <input
         ref={inputRef}

@@ -5,7 +5,7 @@ from fastapi import UploadFile
 from slugify import slugify
 
 from app.core.exceptions import AppException
-from app.models.enums import PostStatus
+from app.models.enums import PostStatus, UserRole
 from app.models.post import Post
 from app.models.post_image import PostImage
 from app.models.user import User
@@ -82,7 +82,7 @@ class PostService:
     ):
         if (
             post.author_id != current_user.id
-            # and current_user.role != UserRole.ADMIN
+            and current_user.role != UserRole.ADMIN
         ):
             raise AppException(
                 status_code=403,
@@ -127,6 +127,47 @@ class PostService:
 
         return post_images
 
+    def _build_post_images_from_urls(
+        self,
+        image_urls: list[str] | None,
+        alt_texts: list[str] | None,
+        positions: list[int] | None,
+        fallback_alt: str,
+    ) -> list[PostImage]:
+        if not image_urls:
+            return []
+
+        post_images = []
+        for index, url in enumerate(image_urls):
+            if not url or not url.strip():
+                continue
+
+            uploaded = self.cloudinary_service.upload_image_from_url(
+                url,
+                folder="posts",
+            )
+
+            alt_text = (
+                alt_texts[index]
+                if alt_texts and index < len(alt_texts) and alt_texts[index]
+                else fallback_alt
+            )
+            position = (
+                positions[index]
+                if positions and index < len(positions)
+                else index
+            )
+
+            post_images.append(
+                PostImage(
+                    image_url=uploaded["url"],
+                    alt_text=alt_text,
+                    position=position,
+                )
+            )
+
+        return post_images
+
     def create_post(
         self,
         post: PostCreate,
@@ -150,8 +191,24 @@ class PostService:
 
             image_url = uploaded["url"]
             public_id = uploaded["public_id"]
-            
-        post_data = post.model_dump(exclude={"tag_ids"})
+        elif post.cover_image_url:
+            uploaded = self.cloudinary_service.upload_image_from_url(
+                post.cover_image_url,
+                folder="posts",
+            )
+
+            image_url = uploaded["url"]
+            public_id = uploaded["public_id"]
+
+        post_data = post.model_dump(
+            exclude={
+                "tag_ids",
+                "cover_image_url",
+                "image_urls",
+                "image_url_alt_texts",
+                "image_url_positions",
+            }
+        )
 
         db_post = Post(
             **post_data,
@@ -168,12 +225,20 @@ class PostService:
         if post.tag_ids:
             db_post.tags = self.tag_service.get_tags_by_ids(post.tag_ids)
 
-        db_post.images = self._build_post_images(
-            images=images,
-            alt_texts=image_alt_texts,
-            positions=image_positions,
-            fallback_alt=post.title,
-        )
+        db_post.images = [
+            *self._build_post_images(
+                images=images,
+                alt_texts=image_alt_texts,
+                positions=image_positions,
+                fallback_alt=post.title,
+            ),
+            *self._build_post_images_from_urls(
+                image_urls=post.image_urls,
+                alt_texts=post.image_url_alt_texts,
+                positions=post.image_url_positions,
+                fallback_alt=post.title,
+            ),
+        ]
 
         return self.post_repository.create_post(db_post)
 
@@ -194,7 +259,13 @@ class PostService:
 
         update_data = post.model_dump(
             exclude_unset=True,
-            exclude={"tag_ids"},
+            exclude={
+                "tag_ids",
+                "cover_image_url",
+                "image_urls",
+                "image_url_alt_texts",
+                "image_url_positions",
+            },
         )
 
         if "category_id" in update_data:
@@ -224,6 +295,19 @@ class PostService:
 
             uploaded = self.cloudinary_service.upload_image(
                 cover_image,
+                folder="posts",
+            )
+
+            update_data["cover_image"] = uploaded["url"]
+            update_data["cover_image_public_id"] = uploaded["public_id"]
+        elif post.cover_image_url:
+            if db_post.cover_image_public_id:
+                self.cloudinary_service.delete_image(
+                    db_post.cover_image_public_id
+                )
+
+            uploaded = self.cloudinary_service.upload_image_from_url(
+                post.cover_image_url,
                 folder="posts",
             )
 
@@ -261,6 +345,15 @@ class PostService:
         )
         if new_images:
             db_post.images.extend(new_images)
+
+        new_url_images = self._build_post_images_from_urls(
+            image_urls=post.image_urls,
+            alt_texts=post.image_url_alt_texts,
+            positions=post.image_url_positions,
+            fallback_alt=post.title or db_post.title,
+        )
+        if new_url_images:
+            db_post.images.extend(new_url_images)
 
         return self.post_repository.update_post(db_post)
     

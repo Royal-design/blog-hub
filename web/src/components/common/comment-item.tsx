@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import { CornerDownRight, Edit2, Reply, Send, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { ConfirmDialog } from "@/components/common/confirm-dialog"
 import { commentService } from "@/services/comment.service"
 import { useAuthStore } from "@/store/auth.store"
 import type { Comment } from "@/types/comment"
@@ -24,6 +25,7 @@ export function CommentItem({ comment, postId, allComments }: CommentItemProps) 
   const [isEditing, setIsEditing] = React.useState(false)
   const [replyText, setReplyText] = React.useState("")
   const [editText, setEditText] = React.useState(comment.content)
+  const [showDelete, setShowDelete] = React.useState(false)
 
   const isOwner = currentUser?.id === comment.user_id
 
@@ -83,9 +85,7 @@ export function CommentItem({ comment, postId, allComments }: CommentItemProps) 
   }
 
   const handleDelete = () => {
-    if (window.confirm("Are you sure you want to delete this comment?")) {
-      deleteMutation.mutate()
-    }
+    setShowDelete(true)
   }
 
   const authorName = comment.user
@@ -242,6 +242,18 @@ export function CommentItem({ comment, postId, allComments }: CommentItemProps) 
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={showDelete}
+        onOpenChange={setShowDelete}
+        title="Delete comment?"
+        description="Are you sure you want to delete this comment? This action cannot be undone."
+        isConfirming={deleteMutation.isPending}
+        onConfirm={() => {
+          deleteMutation.mutate()
+          setShowDelete(false)
+        }}
+      />
     </div>
   )
 }

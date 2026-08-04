@@ -20,19 +20,21 @@ import {
 import * as React from "react"
 import { toast } from "sonner"
 
+import { ConfirmDialog } from "@/components/common/confirm-dialog"
 import { EmptyState } from "@/components/common/empty-state"
 import { ErrorState } from "@/components/common/error-state"
 import { PageLoader } from "@/components/loaders/page-loader"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Pagination } from "@/components/ui/pagination"
-import { useCategories, usePosts, useTags } from "@/hooks/use-posts"
+import { queryKeys, useCategories, usePosts, useTags } from "@/hooks/use-posts"
 import { categoryService } from "@/services/category.service"
 import { postService } from "@/services/post.service"
 import { tagService } from "@/services/tag.service"
 import { userService } from "@/services/user.service"
 import { useAuthStore } from "@/store/auth.store"
 import type { UserRole } from "@/types/auth"
+import type { Post } from "@/types/post"
 import { getErrorMessage } from "@/utils/error"
 import { getInitials } from "@/utils/initials"
 
@@ -76,6 +78,7 @@ function CrudList({
   const [newName, setNewName] = React.useState("")
   const [editingId, setEditingId] = React.useState<string | null>(null)
   const [editName, setEditName] = React.useState("")
+  const [deleteTarget, setDeleteTarget] = React.useState<CrudItem | null>(null)
 
   const handleAdd = () => {
     const trimmed = newName.trim()
@@ -102,9 +105,7 @@ function CrudList({
   }
 
   const handleDelete = (id: string, name: string) => {
-    if (confirm(`Are you sure you want to delete "${name}"?`)) {
-      onDelete(id)
-    }
+    setDeleteTarget({ id, name, slug: name })
   }
 
   return (
@@ -226,11 +227,29 @@ function CrudList({
           </ul>
         </div>
       )}
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+        title="Delete item?"
+        description={
+          deleteTarget
+            ? `Are you sure you want to delete "${deleteTarget.name}"? This action cannot be undone.`
+            : ""
+        }
+        isConfirming={isDeleting}
+        onConfirm={() => {
+          if (deleteTarget) {
+            onDelete(deleteTarget.id)
+            setDeleteTarget(null)
+          }
+        }}
+      />
     </div>
   )
 }
-
-// ─── Admin Dashboard Page ──────────────────────────────────────────────────────
 
 export function AdminDashboardPage() {
   const queryClient = useQueryClient()
@@ -354,6 +373,24 @@ export function AdminDashboardPage() {
     },
     onError: (err) => toast.error(getErrorMessage(err)),
   })
+
+  // ── Post Mutations ──
+  const deletePostMutation = useMutation({
+    mutationFn: postService.deletePost,
+    onSuccess: () => {
+      toast.success("Post deleted successfully")
+      queryClient.invalidateQueries({ queryKey: queryKeys.posts })
+    },
+    onError: (err) => toast.error(getErrorMessage(err)),
+  })
+
+  const [deletePostTarget, setDeletePostTarget] = React.useState<Post | null>(
+    null
+  )
+  const [deleteUserTarget, setDeleteUserTarget] = React.useState<{
+    id: string
+    username: string
+  } | null>(null)
 
   // ── Access Guard (after all hooks) ──
   if (!isAdmin) {
@@ -637,15 +674,9 @@ export function AdminDashboardPage() {
                                     variant="ghost"
                                     size="icon-sm"
                                     disabled={deleteUserMutation.isPending}
-                                    onClick={() => {
-                                      if (
-                                        confirm(
-                                          `Are you sure you want to delete ${u.username}?`
-                                        )
-                                      ) {
-                                        deleteUserMutation.mutate(u.id)
-                                      }
-                                    }}
+                                    onClick={() =>
+                                      setDeleteUserTarget({ id: u.id, username: u.username })
+                                    }
                                     className="text-destructive hover:bg-destructive/10"
                                   >
                                     <Trash2 className="size-4" />
@@ -731,6 +762,22 @@ export function AdminDashboardPage() {
                         </span>{" "}
                         • <span className="font-medium">{p.category?.name}</span>
                       </p>
+                      <div className="flex items-center justify-between border-t border-slate-100 pt-2.5 dark:border-slate-800">
+                        <span className="text-[11px] font-semibold text-muted-foreground">
+                          {new Date(p.created_at).toLocaleDateString()}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          disabled={deletePostMutation.isPending}
+                          onClick={() => setDeletePostTarget(p)}
+                          className="gap-1.5 rounded-lg text-[11px] font-bold"
+                        >
+                          <Trash2 className="size-3.5" />
+                          Delete
+                        </Button>
+                      </div>
                     </div>
                   </Card>
                 ))}
@@ -805,6 +852,48 @@ export function AdminDashboardPage() {
           />
         </div>
       )}
+
+      <ConfirmDialog
+        open={deletePostTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeletePostTarget(null)
+        }}
+        title="Delete story?"
+        description={
+          deletePostTarget
+            ? `Are you sure you want to delete "${deletePostTarget.title}"? This cannot be undone and will remove the story for everyone.`
+            : ""
+        }
+        confirmLabel="Delete story"
+        isConfirming={deletePostMutation.isPending}
+        onConfirm={() => {
+          if (deletePostTarget) {
+            deletePostMutation.mutate(deletePostTarget.id)
+            setDeletePostTarget(null)
+          }
+        }}
+      />
+
+      <ConfirmDialog
+        open={deleteUserTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteUserTarget(null)
+        }}
+        title="Delete user?"
+        description={
+          deleteUserTarget
+            ? `Are you sure you want to delete "${deleteUserTarget.username}"? This action cannot be undone and will remove the user and their content.`
+            : ""
+        }
+        confirmLabel="Delete user"
+        isConfirming={deleteUserMutation.isPending}
+        onConfirm={() => {
+          if (deleteUserTarget) {
+            deleteUserMutation.mutate(deleteUserTarget.id)
+            setDeleteUserTarget(null)
+          }
+        }}
+      />
     </div>
   )
 }

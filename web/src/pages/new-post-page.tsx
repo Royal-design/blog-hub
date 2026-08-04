@@ -37,6 +37,7 @@ export function NewPostPage() {
 
   const [tagIds, setTagIds] = React.useState<string[]>([])
   const [coverImageFile, setCoverImageFile] = React.useState<File | null>(null)
+  const [coverImageUrl, setCoverImageUrl] = React.useState("")
   const [multiImages, setMultiImages] = React.useState<MultiImageItem[]>([])
   const [isPreviewMode, setIsPreviewMode] = React.useState(false)
 
@@ -75,17 +76,36 @@ export function NewPostPage() {
 
     if (coverImageFile) {
       formData.append("cover_image", coverImageFile)
+    } else if (coverImageUrl.trim()) {
+      formData.append("cover_image_url", coverImageUrl.trim())
     }
 
     tagIds.forEach((tagId) => {
       formData.append("tag_ids", tagId)
     })
 
-    // Append multiple gallery images & alt texts
-    multiImages.forEach((item, index) => {
-      formData.append("images", item.file)
-      formData.append("image_alt_texts", item.altText || `Image ${index + 1}`)
-      formData.append("image_positions", String(index + 1))
+    // Append file-based gallery images
+    let position = 1
+    multiImages.forEach((item) => {
+      if (item.file) {
+        formData.append("images", item.file)
+        formData.append("image_alt_texts", item.altText || `Image ${position}`)
+        formData.append("image_positions", String(position))
+        position += 1
+      }
+    })
+
+    // Append URL-based gallery images
+    multiImages.forEach((item) => {
+      if (item.url) {
+        formData.append("image_urls", item.url)
+        formData.append(
+          "image_url_alt_texts",
+          item.altText || `Image ${position}`
+        )
+        formData.append("image_url_positions", String(position))
+        position += 1
+      }
     })
 
     createPost.mutate(formData)
@@ -224,8 +244,9 @@ export function NewPostPage() {
 
               <FormImageUpload
                 label="Cover Image"
-                description="Upload an image to display at the top of your story."
+                description="Upload an image or paste a URL to display at the top of your story."
                 onFileSelect={(file) => setCoverImageFile(file)}
+                onUrlSelect={(url) => setCoverImageUrl(url ?? "")}
               />
 
               <FormMultiImageUpload

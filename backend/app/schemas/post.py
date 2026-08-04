@@ -17,6 +17,10 @@ class PostBase(BaseModel):
 
 class PostCreate(PostBase):
     tag_ids: list[UUID] = Field(default_factory=list)
+    cover_image_url: str | None = None
+    image_urls: list[str] = Field(default_factory=list)
+    image_url_alt_texts: list[str] = Field(default_factory=list)
+    image_url_positions: list[int] = Field(default_factory=list)
 
     @classmethod
     def get_form(
@@ -27,6 +31,10 @@ class PostCreate(PostBase):
         status: PostStatus = Form(...),
         category_id: UUID = Form(...),
         tag_ids: list[UUID] = Form([]),
+        cover_image_url: str | None = Form(None),
+        image_urls: list[str] = Form([]),
+        image_url_alt_texts: list[str] = Form([]),
+        image_url_positions: list[int] = Form([]),
     ):
         return cls(
             title=title,
@@ -35,6 +43,10 @@ class PostCreate(PostBase):
             status=status,
             category_id=category_id,
             tag_ids=tag_ids,
+            cover_image_url=cover_image_url,
+            image_urls=image_urls,
+            image_url_alt_texts=image_url_alt_texts,
+            image_url_positions=image_url_positions,
         )
 
 
@@ -45,6 +57,10 @@ class PostUpdate(BaseModel):
     status: PostStatus | None = None
     category_id: UUID | None = None
     tag_ids: list[UUID] | None = None
+    cover_image_url: str | None = None
+    image_urls: list[str] | None = None
+    image_url_alt_texts: list[str] | None = None
+    image_url_positions: list[int] | None = None
 
     @classmethod
     def get_form(
@@ -55,6 +71,10 @@ class PostUpdate(BaseModel):
         status: PostStatus | None = Form(None),
         category_id: UUID | None = Form(None),
         tag_ids: list[UUID] | None = Form(None),
+        cover_image_url: str | None = Form(None),
+        image_urls: list[str] | None = Form(None),
+        image_url_alt_texts: list[str] | None = Form(None),
+        image_url_positions: list[int] | None = Form(None),
     ):
         return cls(
             title=title,
@@ -63,6 +83,10 @@ class PostUpdate(BaseModel):
             status=status,
             category_id=category_id,
             tag_ids=tag_ids,
+            cover_image_url=cover_image_url,
+            image_urls=image_urls,
+            image_url_alt_texts=image_url_alt_texts,
+            image_url_positions=image_url_positions,
         )
 
 

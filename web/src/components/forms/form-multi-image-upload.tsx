@@ -1,14 +1,16 @@
-import { ImagePlus, Images, Trash2 } from "lucide-react"
+import { ImagePlus, Images, Link2, Trash2 } from "lucide-react"
 import * as React from "react"
 
+import { Button } from "@/components/ui/button"
 import { Field, FieldLabel } from "@/components/ui/field"
 import { cn } from "@/lib/utils"
 
 export interface MultiImageItem {
   id: string
-  file: File
   previewUrl: string
   altText: string
+  file?: File
+  url?: string
 }
 
 export interface FormMultiImageUploadProps {
@@ -27,6 +29,7 @@ export function FormMultiImageUpload({
   containerClassName,
 }: FormMultiImageUploadProps) {
   const inputRef = React.useRef<HTMLInputElement>(null)
+  const [urlInput, setUrlInput] = React.useState("")
 
   const handleFilesSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || [])
@@ -43,6 +46,21 @@ export function FormMultiImageUpload({
     if (inputRef.current) {
       inputRef.current.value = ""
     }
+  }
+
+  const handleUrlAdd = () => {
+    const trimmed = urlInput.trim()
+    if (!trimmed) return
+
+    const newItem: MultiImageItem = {
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      previewUrl: trimmed,
+      altText: trimmed.split("/").pop()?.split("?")[0] || `Image ${images.length + 1}`,
+      url: trimmed,
+    }
+
+    onChange([...images, newItem])
+    setUrlInput("")
   }
 
   const handleRemove = (id: string) => {
@@ -124,6 +142,34 @@ export function FormMultiImageUpload({
             Select multiple PNG, JPG, or WEBP images
           </p>
         </div>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Link2 className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            value={urlInput}
+            onChange={(e) => setUrlInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault()
+                handleUrlAdd()
+              }
+            }}
+            placeholder="Or add an image by URL..."
+            className="h-9 w-full rounded-lg border border-slate-300 bg-background pr-2 pl-8 text-xs font-medium outline-none focus:ring-2 focus:ring-primary/25 dark:border-slate-700"
+          />
+        </div>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={handleUrlAdd}
+          className="h-9 shrink-0 rounded-lg text-xs font-bold"
+        >
+          Add
+        </Button>
       </div>
 
       <input
