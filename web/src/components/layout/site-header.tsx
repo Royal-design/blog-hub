@@ -4,6 +4,7 @@ import { Link, NavLink, useNavigate } from "react-router"
 
 import { Button } from "@/components/ui/button"
 import { buttonVariants } from "@/components/ui/button-variants"
+import { OptimizedImage } from "@/components/common/optimized-image"
 import { useLogout } from "@/hooks/use-auth"
 import { useAppStore } from "@/store/app.store"
 import { useAuthStore } from "@/store/auth.store"
@@ -110,10 +111,21 @@ export function SiteHeader() {
                 title={`${user.first_name} ${user.last_name}`}
               >
                 {user.avatar ? (
-                  <img
+                  <OptimizedImage
                     src={user.avatar}
                     alt=""
-                    className="size-8 rounded-lg object-cover ring-1 ring-primary/20"
+                    eager
+                    className="size-8 rounded-lg ring-1 ring-primary/20"
+                    fallback={
+                      <span className="grid size-full place-items-center rounded-lg bg-primary/10 text-xs font-extrabold uppercase tracking-wider text-primary">
+                        {getInitials(
+                          `${user.first_name || ""} ${user.last_name || ""}`,
+                          user.first_name,
+                          user.last_name,
+                          user.username
+                        )}
+                      </span>
+                    }
                   />
                 ) : (
                   <div className="grid size-8 place-items-center rounded-lg bg-primary/10 text-primary font-extrabold text-xs uppercase border border-primary/20 tracking-wider">

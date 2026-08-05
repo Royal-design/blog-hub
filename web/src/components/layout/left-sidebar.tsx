@@ -12,6 +12,7 @@ import {
 import { NavLink } from "react-router"
 
 import { useCategories, usePosts, useTags } from "@/hooks/use-posts"
+import { OptimizedImage } from "@/components/common/optimized-image"
 import { followService } from "@/services/follow.service"
 import { useAuthStore } from "@/store/auth.store"
 import { getInitials } from "@/utils/initials"
@@ -64,10 +65,16 @@ export function LeftSidebar() {
         <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800/80 bg-card p-5 shadow-sm space-y-4">
           <div className="flex items-center gap-3">
             {user.avatar ? (
-              <img
+              <OptimizedImage
                 src={user.avatar}
                 alt={user.first_name}
-                className="size-12 rounded-full object-cover ring-2 ring-primary/20"
+                eager
+                className="size-12 rounded-full ring-2 ring-primary/20"
+                fallback={
+                  <span className="grid size-full place-items-center rounded-full bg-primary/10 text-sm font-extrabold tracking-wider text-primary">
+                    {userInitials}
+                  </span>
+                }
               />
             ) : (
               <div className="grid size-12 place-items-center rounded-full bg-primary/10 text-primary font-extrabold text-sm border border-primary/20 tracking-wider">

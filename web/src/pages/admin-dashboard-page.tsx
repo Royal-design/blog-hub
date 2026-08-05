@@ -23,6 +23,7 @@ import { toast } from "sonner"
 import { ConfirmDialog } from "@/components/common/confirm-dialog"
 import { EmptyState } from "@/components/common/empty-state"
 import { ErrorState } from "@/components/common/error-state"
+import { OptimizedImage } from "@/components/common/optimized-image"
 import { PageLoader } from "@/components/loaders/page-loader"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -588,10 +589,10 @@ export function AdminDashboardPage() {
                             <td className="p-4">
                               <div className="flex items-center gap-3">
                                 {u.avatar && u.avatar !== "string" ? (
-                                  <img
+                                  <OptimizedImage
                                     src={u.avatar}
                                     alt=""
-                                    className="size-9 rounded-full object-cover"
+                                    className="size-9 rounded-full"
                                   />
                                 ) : (
                                   <div className="grid size-9 place-items-center rounded-full bg-primary/10 font-bold text-primary">
@@ -726,10 +727,12 @@ export function AdminDashboardPage() {
                     {/* Cover Image */}
                     <div className="relative h-40 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
                       {p.cover_image ? (
-                        <img
+                        <OptimizedImage
                           src={p.cover_image}
                           alt={p.title}
-                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          sizes="(max-width: 640px) 100vw, 400px"
+                          className="size-full"
+                          imgClassName="transition-transform duration-300 group-hover:scale-105"
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center">

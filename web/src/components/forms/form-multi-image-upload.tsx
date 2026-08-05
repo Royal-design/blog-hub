@@ -3,6 +3,7 @@ import * as React from "react"
 
 import { Button } from "@/components/ui/button"
 import { Field, FieldLabel } from "@/components/ui/field"
+import { OptimizedImage } from "@/components/common/optimized-image"
 import { cn } from "@/lib/utils"
 
 export interface MultiImageItem {
@@ -96,10 +97,11 @@ export function FormMultiImageUpload({
               className="group relative space-y-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 shadow-xs dark:border-slate-800 dark:bg-slate-900/60"
             >
               <div className="relative aspect-video overflow-hidden rounded-xl bg-slate-950">
-                <img
+                <OptimizedImage
                   src={item.previewUrl}
                   alt={item.altText}
-                  className="size-full object-cover"
+                  eager
+                  className="size-full"
                 />
                 <button
                   type="button"

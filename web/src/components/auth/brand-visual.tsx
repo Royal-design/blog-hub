@@ -1,6 +1,8 @@
 import { motion } from "framer-motion"
 import { BookOpen, Feather, Sparkles, Star, TrendingUp, Users } from "lucide-react"
 
+import { OptimizedImage } from "@/components/common/optimized-image"
+
 interface BrandVisualProps {
   badgeText?: string
   headline?: string
@@ -139,20 +141,20 @@ export function BrandVisual({
       <div className="relative z-10 flex items-center justify-between border-t border-white/10 pt-4">
         <div className="flex items-center gap-3">
           <div className="flex -space-x-2">
-            <img
-              className="size-7 rounded-full border-2 border-slate-900 object-cover"
+            <OptimizedImage
               src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
               alt="Author avatar"
+              className="size-7 rounded-full border-2 border-slate-900"
             />
-            <img
-              className="size-7 rounded-full border-2 border-slate-900 object-cover"
+            <OptimizedImage
               src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80"
               alt="Author avatar"
+              className="size-7 rounded-full border-2 border-slate-900"
             />
-            <img
-              className="size-7 rounded-full border-2 border-slate-900 object-cover"
+            <OptimizedImage
               src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80"
               alt="Author avatar"
+              className="size-7 rounded-full border-2 border-slate-900"
             />
           </div>
           <div className="text-xs">

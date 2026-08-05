@@ -5,6 +5,7 @@ import { CornerDownRight, Edit2, Reply, Send, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/common/confirm-dialog"
+import { OptimizedImage } from "@/components/common/optimized-image"
 import { commentService } from "@/services/comment.service"
 import { useAuthStore } from "@/store/auth.store"
 import type { Comment } from "@/types/comment"
@@ -99,10 +100,20 @@ export function CommentItem({ comment, postId, allComments }: CommentItemProps) 
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">
             {comment.user?.avatar ? (
-              <img
+              <OptimizedImage
                 src={comment.user.avatar}
                 alt=""
-                className="size-7 rounded-full object-cover"
+                className="size-7 rounded-full"
+                fallback={
+                  <span className="grid size-full place-items-center rounded-full bg-primary/10 text-[10px] font-extrabold tracking-wider text-primary">
+                    {getInitials(
+                      `${comment.user?.first_name || ""} ${comment.user?.last_name || ""}`,
+                      comment.user?.first_name,
+                      comment.user?.last_name,
+                      comment.user?.username
+                    )}
+                  </span>
+                }
               />
             ) : (
               <div className="grid size-7 place-items-center rounded-full bg-primary/10 text-primary font-extrabold text-[10px] tracking-wider">

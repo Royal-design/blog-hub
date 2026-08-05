@@ -1,6 +1,7 @@
 import { motion } from "framer-motion"
 
 import { FollowButton } from "@/components/common/follow-button"
+import { OptimizedImage } from "@/components/common/optimized-image"
 import type { User } from "@/types/auth"
 import { getInitials } from "@/utils/initials"
 
@@ -29,11 +30,15 @@ export function UserCard({
       <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200/60 bg-card p-3 transition-colors hover:bg-slate-50/80 dark:border-slate-800/60 dark:hover:bg-slate-900/40">
         <div className="flex min-w-0 flex-1 items-center gap-3">
           {user.avatar && user.avatar !== "string" ? (
-            <img
+            <OptimizedImage
               src={user.avatar}
               alt={fullName}
-              className="size-10 shrink-0 rounded-full object-cover ring-2 ring-primary/20"
-              loading="lazy"
+              className="size-10 shrink-0 rounded-full ring-2 ring-primary/20"
+              fallback={
+                <span className="grid size-full place-items-center rounded-full border border-primary/20 bg-primary/10 text-xs font-extrabold tracking-wider text-primary">
+                  {initials}
+                </span>
+              }
             />
           ) : (
             <div className="grid size-10 shrink-0 place-items-center rounded-full border border-primary/20 bg-primary/10 text-xs font-extrabold tracking-wider text-primary">
@@ -62,11 +67,15 @@ export function UserCard({
       <div className="flex items-start gap-4">
         <div className="shrink-0">
           {user.avatar && user.avatar !== "string" ? (
-            <img
+            <OptimizedImage
               src={user.avatar}
               alt={fullName}
-              className="size-14 rounded-full object-cover ring-2 ring-primary/20"
-              loading="lazy"
+              className="size-14 rounded-full ring-2 ring-primary/20"
+              fallback={
+                <span className="grid size-full place-items-center rounded-full border border-primary/20 bg-primary/10 text-base font-extrabold tracking-wider text-primary">
+                  {initials}
+                </span>
+              }
             />
           ) : (
             <div className="grid size-14 place-items-center rounded-full border border-primary/20 bg-primary/10 text-base font-extrabold tracking-wider text-primary">

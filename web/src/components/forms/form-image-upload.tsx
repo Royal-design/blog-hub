@@ -2,6 +2,7 @@ import { ImagePlus, Link2, X } from "lucide-react"
 import * as React from "react"
 
 import { Button } from "@/components/ui/button"
+import { OptimizedImage } from "@/components/common/optimized-image"
 import { Field, FieldLabel } from "@/components/ui/field"
 import { cn } from "@/lib/utils"
 
@@ -68,10 +69,12 @@ export function FormImageUpload({
 
       {activePreview ? (
         <div className="group relative flex aspect-video items-center justify-center overflow-hidden rounded-2xl border border-slate-300 bg-slate-950 sm:aspect-[21/9] dark:border-slate-700">
-          <img
+          <OptimizedImage
             src={activePreview}
             alt="Upload preview"
-            className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+            eager
+            className="size-full"
+            imgClassName="transition-transform duration-300 group-hover:scale-105"
           />
           <div className="absolute inset-0 flex items-center justify-center gap-3 bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
             <button

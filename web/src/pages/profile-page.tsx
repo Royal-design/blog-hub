@@ -19,6 +19,7 @@ import { toast } from "sonner"
 import { ErrorState } from "@/components/common/error-state"
 import { FormInput } from "@/components/forms/form-input"
 import { FormTextarea } from "@/components/forms/form-textarea"
+import { OptimizedImage } from "@/components/common/optimized-image"
 import { PageLoader } from "@/components/loaders/page-loader"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -145,10 +146,21 @@ export function ProfilePage() {
             <div className="relative group">
               <div className="relative size-28 sm:size-36 rounded-full border-4 border-white dark:border-slate-900 shadow-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 transition-transform duration-300 group-hover:scale-[1.02]">
                 {displayAvatar ? (
-                  <img
+                  <OptimizedImage
                     src={displayAvatar}
                     alt={profile?.first_name || "Profile"}
-                    className="size-full object-cover"
+                    eager
+                    className="size-full"
+                    fallback={
+                      <span className="grid size-full place-items-center rounded-full bg-primary/10 text-3xl font-extrabold tracking-wider text-primary sm:text-4xl">
+                        {getInitials(
+                          `${profile?.first_name || ""} ${profile?.last_name || ""}`,
+                          profile?.first_name,
+                          profile?.last_name,
+                          profile?.username
+                        )}
+                      </span>
+                    }
                   />
                 ) : (
                   <div className="size-full grid place-items-center bg-primary/10 text-primary font-extrabold text-3xl sm:text-4xl tracking-wider">
@@ -268,7 +280,7 @@ export function ProfilePage() {
               <div className="flex items-center gap-3">
                 <div className="relative size-12 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 shrink-0">
                   {displayAvatar ? (
-                    <img src={displayAvatar} alt="" className="size-full object-cover" />
+                    <OptimizedImage src={displayAvatar} alt="" className="size-full" />
                   ) : (
                     <User className="size-full p-2 text-slate-400" />
                   )}

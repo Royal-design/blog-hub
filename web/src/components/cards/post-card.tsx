@@ -8,6 +8,7 @@ import { toast } from "sonner"
 
 import { BookmarkButton } from "@/components/common/bookmark-button"
 import { LikeButton } from "@/components/common/like-button"
+import { OptimizedImage } from "@/components/common/optimized-image"
 import { buttonVariants } from "@/components/ui/button-variants"
 import { cn } from "@/lib/utils"
 import type { Post } from "@/types/post"
@@ -74,11 +75,15 @@ export function PostCard({ post, layout = "grid" }: PostCardProps) {
           {/* Author info row */}
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             {post.author?.avatar ? (
-              <img
+              <OptimizedImage
                 src={post.author.avatar}
                 alt=""
-                className="size-6 rounded-full object-cover shrink-0 ring-1 ring-primary/20"
-                loading="lazy"
+                className="size-6 shrink-0 rounded-full ring-1 ring-primary/20"
+                fallback={
+                  <span className="grid size-full place-items-center rounded-full bg-primary/15 text-[10px] font-extrabold tracking-wider text-primary">
+                    {initials}
+                  </span>
+                }
               />
             ) : (
               <div className="grid size-6 place-items-center rounded-full bg-primary/15 text-[10px] font-extrabold text-primary shrink-0 tracking-wider">
@@ -167,11 +172,10 @@ export function PostCard({ post, layout = "grid" }: PostCardProps) {
                         key={img.id}
                         className="snap-start shrink-0 w-full h-full"
                       >
-                        <img
+                        <OptimizedImage
                           src={img.image_url}
                           alt={img.alt_text}
-                          className="size-full object-cover"
-                          loading="lazy"
+                          sizes="(max-width: 640px) 92vw, 26rem"
                         />
                       </div>
                     ))}
@@ -184,11 +188,11 @@ export function PostCard({ post, layout = "grid" }: PostCardProps) {
                   )}
                 </>
               ) : (
-                <img
-                  src={post.cover_image!}
+                <OptimizedImage
+                  src={post.cover_image}
                   alt=""
-                  className="size-full object-cover transition duration-300 group-hover:scale-105"
-                  loading="lazy"
+                  sizes="(max-width: 640px) 92vw, 11rem"
+                  imgClassName="transition duration-300 group-hover:scale-105"
                 />
               )}
             </div>
@@ -218,11 +222,10 @@ export function PostCard({ post, layout = "grid" }: PostCardProps) {
                     key={img.id}
                     className="snap-start shrink-0 w-full h-full"
                   >
-                    <img
+                    <OptimizedImage
                       src={img.image_url}
                       alt={img.alt_text}
-                      className="size-full object-cover"
-                      loading="lazy"
+                      sizes="(max-width: 640px) 92vw, 26rem"
                     />
                   </div>
                 ))}
@@ -235,11 +238,11 @@ export function PostCard({ post, layout = "grid" }: PostCardProps) {
               )}
             </>
           ) : post.cover_image ? (
-            <img
+            <OptimizedImage
               src={post.cover_image}
               alt=""
-              className="size-full object-cover transition duration-500 group-hover:scale-105"
-              loading="lazy"
+              sizes="(max-width: 640px) 92vw, 26rem"
+              imgClassName="transition duration-500 group-hover:scale-105"
             />
           ) : (
             <div className="size-full bg-gradient-to-tr from-violet-600 via-indigo-600 to-sky-500" />
@@ -254,11 +257,15 @@ export function PostCard({ post, layout = "grid" }: PostCardProps) {
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             {post.author?.avatar ? (
-              <img
+              <OptimizedImage
                 src={post.author.avatar}
                 alt=""
-                className="size-6 rounded-full object-cover ring-1 ring-primary/20"
-                loading="lazy"
+                className="size-6 shrink-0 rounded-full ring-1 ring-primary/20"
+                fallback={
+                  <span className="grid size-full place-items-center rounded-full bg-primary/15 text-[10px] font-extrabold tracking-wider text-primary">
+                    {initials}
+                  </span>
+                }
               />
             ) : (
               <div className="grid size-6 place-items-center rounded-full bg-primary/15 text-[10px] font-extrabold text-primary shrink-0 tracking-wider">

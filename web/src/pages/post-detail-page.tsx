@@ -10,6 +10,7 @@ import { CommentItem } from "@/components/common/comment-item"
 import { ErrorState } from "@/components/common/error-state"
 import { FollowButton } from "@/components/common/follow-button"
 import { LikeButton } from "@/components/common/like-button"
+import { OptimizedImage } from "@/components/common/optimized-image"
 import { PageLoader } from "@/components/loaders/page-loader"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -130,10 +131,21 @@ export function PostDetailPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 border-t border-b border-slate-200/80 dark:border-slate-800/80 py-4">
           <div className="flex items-center gap-3">
             {post.author.avatar ? (
-              <img
+              <OptimizedImage
                 src={post.author.avatar}
                 alt=""
-                className="size-11 rounded-full object-cover border-2 border-primary/20"
+                eager
+                className="size-11 rounded-full border-2 border-primary/20"
+                fallback={
+                  <span className="grid size-full place-items-center rounded-full bg-primary/10 text-sm font-extrabold tracking-wider text-primary">
+                    {getInitials(
+                      post.author.name,
+                      post.author.first_name,
+                      post.author.last_name,
+                      post.author.username
+                    )}
+                  </span>
+                }
               />
             ) : (
               <div className="grid size-11 place-items-center rounded-full bg-primary/10 text-primary font-extrabold text-sm tracking-wider">
@@ -182,10 +194,12 @@ export function PostDetailPage() {
       {/* Cover Image */}
       {post.cover_image ? (
         <div className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-lg">
-          <img
+          <OptimizedImage
             src={post.cover_image}
             alt=""
-            className="aspect-[16/9] w-full object-cover"
+            eager
+            sizes="(max-width: 768px) 100vw, 896px"
+            className="aspect-[16/9] w-full"
           />
         </div>
       ) : null}
@@ -206,11 +220,11 @@ export function PostDetailPage() {
                 key={img.id}
                 className="overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-800/80 shadow-sm"
               >
-                <img
+                <OptimizedImage
                   src={img.image_url}
                   alt={img.alt_text}
-                  className="aspect-[4/3] w-full object-cover"
-                  loading="lazy"
+                  sizes="(max-width: 640px) 100vw, 480px"
+                  className="aspect-[4/3] w-full"
                 />
               </div>
             ))}
